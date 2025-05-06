@@ -1,0 +1,582 @@
+import { useState, useEffect } from 'react';
+import { Calendar, Clock, Users, Plus, Search, Filter, Download, Upload, X, CheckCircle, AlertTriangle, Edit2, Trash2 } from 'lucide-react';
+import { classesService, trainersService } from '../services/api';
+import { useApp } from '../context/AppContext';
+
+// Días de la semana
+const diasSemana = [
+  { id: 'lunes', label: 'Lunes' },
+  { id: 'martes', label: 'Martes' },
+  { id: 'miercoles', label: 'Miércoles' },
+  { id: 'jueves', label: 'Jueves' },
+  { id: 'viernes', label: 'Viernes' },
+  { id: 'sabado', label: 'Sábado' },
+  { id: 'domingo', label: 'Domingo' }
+];
+
+function Toast({ message, type, onClose }) {
+  return (
+    <div className={`fixed top-6 right-6 z-50 px-4 py-3 rounded shadow-lg flex items-center gap-2 ${type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+      {type === 'success' ? <CheckCircle className="w-5 h-5" /> : <AlertTriangle className="w-5 h-5" />}
+      <span>{message}</span>
+      <button onClick={onClose} className="ml-2 text-lg font-bold">×</button>
+    </div>
+  );
+}
+
+export default function Clases() {
+  const { classes, loading: contextLoading, error: contextError, updateClasses } = useApp();
+  const [showForm, setShowForm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [claseToDelete, setClaseToDelete] = useState(null);
+  const [editingClase, setEditingClase] = useState(null);
+  const [form, setForm] = useState({
+    nombre: '',
+    instructor: '',
+    horaInicio: '',
+    horaFin: '',
+    capacidad: '',
+    nivel: 'Principiante',
+    estado: 'Activa',
+    dias: []
+  });
+  const [formError, setFormError] = useState('');
+  const [toast, setToast] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [trainers, setTrainers] = useState([]);
+
+  // Cargar datos iniciales
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const [clasesData, entrenadoresData] = await Promise.all([
+        classesService.getAll(),
+        trainersService.getAll()
+      ]);
+      updateClasses(clasesData);
+      setTrainers(entrenadoresData);
+    } catch (error) {
+      showToast('Error al cargar los datos', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const showToast = (message, type) => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  const handleOpenForm = (clase = null) => {
+    setEditingClase(clase);
+    setForm(clase ? {
+      ...clase,
+      instructor: trainers.find(t => t.nombre === clase.instructor)?.id || '',
+      dias: Array.isArray(clase.dias) ? clase.dias : [],
+      estado: clase.estado || 'Activa'
+    } : {
+      nombre: '',
+      instructor: '',
+      horaInicio: '',
+      horaFin: '',
+      capacidad: '',
+      nivel: 'Principiante',
+      estado: 'Activa',
+      dias: []
+    });
+    setFormError('');
+    setShowForm(true);
+  };
+
+  const handleCloseForm = () => {
+    setShowForm(false);
+    setEditingClase(null);
+    setFormError('');
+  };
+
+  const handleFormChange = (e) => {
+    const { name, value } = e.target;
+    setForm(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleDiasChange = (diaId) => {
+    setForm(prev => {
+      const currentDias = prev.dias || [];
+      const dias = currentDias.includes(diaId)
+        ? currentDias.filter(d => d !== diaId)
+        : [...currentDias, diaId];
+      return { ...prev, dias };
+    });
+  };
+
+  const validateForm = () => {
+    if (!form.nombre) return 'El nombre es obligatorio';
+    if (!form.instructor) return 'Debe seleccionar un instructor';
+    if (!form.horaInicio) return 'Debe seleccionar una hora de inicio';
+    if (!form.horaFin) return 'Debe seleccionar una hora de fin';
+    if (!form.capacidad) return 'La capacidad es obligatoria';
+    if (!form.dias.length) return 'Debe seleccionar al menos un día';
+    return '';
+  };
+
+  const handleFormSubmit = async (e) => {
+    e.preventDefault();
+    const error = validateForm();
+    if (error) {
+      setFormError(error);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const selectedTrainer = trainers.find(t => t.id === parseInt(form.instructor));
+      const claseData = {
+        ...form,
+        instructor: selectedTrainer?.nombre,
+        capacidad: parseInt(form.capacidad),
+        dias: Array.isArray(form.dias) ? form.dias : [],
+        estado: form.estado
+      };
+
+      if (editingClase) {
+        await classesService.update(editingClase.id, claseData);
+        showToast('Clase actualizada exitosamente', 'success');
+      } else {
+        await classesService.create(claseData);
+        showToast('Clase creada exitosamente', 'success');
+      }
+
+      await loadData();
+      handleCloseForm();
+    } catch (error) {
+      showToast(error.message || 'Error al guardar la clase', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (clase) => {
+    try {
+      setLoading(true);
+      await classesService.delete(clase.id);
+      showToast('Clase eliminada exitosamente', 'success');
+      await updateClasses();
+      setShowDeleteConfirm(false);
+      setClaseToDelete(null);
+    } catch (error) {
+      showToast(error.message || 'Error al eliminar la clase', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredClases = classes.filter(clase =>
+    clase.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    clase.instructor.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const formatDias = (dias) => {
+    if (!dias) return '';
+    if (typeof dias === 'string') {
+      return dias;
+    }
+    if (!Array.isArray(dias)) {
+      return '';
+    }
+    return dias
+      .map(dia => diasSemana.find(d => d.id === dia)?.label)
+      .filter(Boolean)
+      .join(', ');
+  };
+
+  if (contextError) {
+    return (
+      <div className="p-6">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <AlertTriangle className="h-5 w-5 text-red-400" />
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800">
+                Error al cargar los datos
+              </h3>
+              <div className="mt-2 text-sm text-red-700">
+                <p>{contextError}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Clases</h1>
+          <p className="mt-1 text-sm text-gray-500">
+            Gestiona las clases y horarios del gimnasio
+          </p>
+        </div>
+        <button 
+          onClick={() => handleOpenForm()}
+          className="px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center transition-colors duration-200 shadow-sm"
+        >
+          <Plus className="h-5 w-5 mr-2" />
+          Nueva Clase
+        </button>
+      </div>
+
+      <div className="bg-white shadow-sm rounded-xl overflow-hidden">
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1">
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Search className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Buscar por nombre de clase o instructor..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                />
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button className="px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center transition-colors duration-200">
+                <Filter className="h-4 w-4 mr-2" />
+                Filtros
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Clase
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Instructor
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Horario
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Días
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Estado
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Acciones
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {filteredClases.map((clase) => (
+                <tr key={clase.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {clase.nombre}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {clase.nivel} · {clase.capacidad} personas
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900">{clase.instructor}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900">
+                      {clase.horaInicio} - {clase.horaFin}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="text-sm text-gray-900">
+                      {formatDias(clase.dias)}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        clase.estado === 'Activa'
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-red-100 text-red-800'
+                      }`}
+                    >
+                      {clase.estado}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <div className="flex justify-end gap-2">
+                      <button
+                        onClick={() => handleOpenForm(clase)}
+                        className="text-blue-600 hover:text-blue-900"
+                        title="Editar"
+                      >
+                        <Edit2 className="h-5 w-5" />
+                      </button>
+                      <button
+                        onClick={() => {
+                          setClaseToDelete(clase);
+                          setShowDeleteConfirm(true);
+                        }}
+                        className="text-red-600 hover:text-red-900"
+                        title="Eliminar"
+                      >
+                        <Trash2 className="h-5 w-5" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Modal Formulario */}
+      {showForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold text-gray-900">
+                  {editingClase ? 'Editar Clase' : 'Nueva Clase'}
+                </h2>
+                <button onClick={handleCloseForm} className="text-gray-400 hover:text-gray-500">
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+
+              <form onSubmit={handleFormSubmit} className="space-y-6">
+                {/* Nombre */}
+                <div>
+                  <label htmlFor="nombre" className="block text-sm font-medium text-gray-700">
+                    Nombre
+                  </label>
+                  <input
+                    type="text"
+                    id="nombre"
+                    name="nombre"
+                    value={form.nombre}
+                    onChange={handleFormChange}
+                    className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  />
+                </div>
+
+                {/* Instructor */}
+                <div>
+                  <label htmlFor="instructor" className="block text-sm font-medium text-gray-700">
+                    Instructor
+                  </label>
+                  <select
+                    id="instructor"
+                    name="instructor"
+                    value={form.instructor}
+                    onChange={handleFormChange}
+                    className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  >
+                    <option value="">Seleccionar instructor</option>
+                    {trainers.map(trainer => (
+                      <option key={trainer.id} value={trainer.id}>
+                        {trainer.nombre}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Estado */}
+                <div>
+                  <label htmlFor="estado" className="block text-sm font-medium text-gray-700">
+                    Estado
+                  </label>
+                  <select
+                    id="estado"
+                    name="estado"
+                    value={form.estado}
+                    onChange={handleFormChange}
+                    className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  >
+                    <option value="Activa">Activa</option>
+                    <option value="Inactiva">Inactiva</option>
+                  </select>
+                </div>
+
+                {/* Horario */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="horaInicio" className="block text-sm font-medium text-gray-700">
+                      Hora de inicio
+                    </label>
+                    <input
+                      type="time"
+                      id="horaInicio"
+                      name="horaInicio"
+                      value={form.horaInicio}
+                      onChange={handleFormChange}
+                      className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="horaFin" className="block text-sm font-medium text-gray-700">
+                      Hora de fin
+                    </label>
+                    <input
+                      type="time"
+                      id="horaFin"
+                      name="horaFin"
+                      value={form.horaFin}
+                      onChange={handleFormChange}
+                      className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+
+                {/* Capacidad y Nivel */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="capacidad" className="block text-sm font-medium text-gray-700">
+                      Capacidad
+                    </label>
+                    <input
+                      type="number"
+                      id="capacidad"
+                      name="capacidad"
+                      value={form.capacidad}
+                      onChange={handleFormChange}
+                      min="1"
+                      className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="nivel" className="block text-sm font-medium text-gray-700">
+                      Nivel
+                    </label>
+                    <select
+                      id="nivel"
+                      name="nivel"
+                      value={form.nivel}
+                      onChange={handleFormChange}
+                      className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    >
+                      <option value="Principiante">Principiante</option>
+                      <option value="Intermedio">Intermedio</option>
+                      <option value="Avanzado">Avanzado</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Días */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Días de clase
+                  </label>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                    {diasSemana.map(dia => (
+                      <label key={dia.id} className="inline-flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={form.dias.includes(dia.id)}
+                          onChange={() => handleDiasChange(dia.id)}
+                          className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        />
+                        <span className="ml-2 text-sm text-gray-700">{dia.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {formError && (
+                  <div className="text-red-600 text-sm">{formError}</div>
+                )}
+
+                <div className="flex justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={handleCloseForm}
+                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    disabled={loading}
+                  >
+                    {loading ? 'Guardando...' : editingClase ? 'Guardar cambios' : 'Crear clase'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de confirmación de eliminación */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full">
+            <div className="p-6">
+              <div className="flex items-center mb-4">
+                <AlertTriangle className="h-6 w-6 text-red-600 mr-2" />
+                <h3 className="text-lg font-medium text-gray-900">
+                  Confirmar eliminación
+                </h3>
+              </div>
+              <p className="text-sm text-gray-500 mb-4">
+                ¿Estás seguro de que deseas eliminar la clase "{claseToDelete?.nombre}"? Esta acción no se puede deshacer.
+              </p>
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowDeleteConfirm(false);
+                    setClaseToDelete(null);
+                  }}
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDelete(claseToDelete)}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                  disabled={loading}
+                >
+                  {loading ? 'Eliminando...' : 'Eliminar'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast de notificación */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
+    </div>
+  );
+}
+  
