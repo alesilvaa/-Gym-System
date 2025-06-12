@@ -12,7 +12,8 @@ const mockData = {
       capacidad: 20,
       nivel: 'Principiante',
       estado: 'Activa',
-      inscritos: 15
+      inscritos: 15,
+      membresiasPermitidas: [1, 2] // IDs de las membresías que pueden acceder
     },
     { 
       id: 2, 
@@ -24,7 +25,8 @@ const mockData = {
       capacidad: 15,
       nivel: 'Intermedio',
       estado: 'Activa',
-      inscritos: 10
+      inscritos: 10,
+      membresiasPermitidas: [2] // Solo membresía Premium
     }
   ],
   payments: [],
@@ -108,6 +110,7 @@ export const classesService = {
       id: mockData.classes.length + 1,
       inscritos: 0,
       estado: 'Activa',
+      membresiasPermitidas: classData.membresiasPermitidas || [],
       ...classData 
     };
     mockData.classes.push(newClass);
@@ -116,7 +119,11 @@ export const classesService = {
   update: async (id, classData) => {
     const idx = mockData.classes.findIndex(c => c.id === id);
     if (idx !== -1) {
-      mockData.classes[idx] = { ...mockData.classes[idx], ...classData };
+      mockData.classes[idx] = { 
+        ...mockData.classes[idx], 
+        ...classData,
+        membresiasPermitidas: classData.membresiasPermitidas || mockData.classes[idx].membresiasPermitidas
+      };
       return mockData.classes[idx];
     }
     throw new Error('Class not found');
@@ -288,4 +295,41 @@ export const trainersService = {
 export const settingsService = {
   getSettings: async () => mockData.settings,
   updateSettings: async (settingsData) => { mockData.settings = { ...mockData.settings, ...settingsData }; return mockData.settings; }
+};
+
+export const membershipService = {
+  getAll: async () => {
+    const stored = localStorage.getItem('membresias');
+    return stored ? JSON.parse(stored) : [];
+  },
+  getById: async (id) => {
+    const membresias = await membershipService.getAll();
+    return membresias.find(m => m.id === id);
+  },
+  create: async (membershipData) => {
+    const membresias = await membershipService.getAll();
+    const newMembership = { 
+      id: Date.now(),
+      ...membershipData
+    };
+    membresias.push(newMembership);
+    localStorage.setItem('membresias', JSON.stringify(membresias));
+    return newMembership;
+  },
+  update: async (id, membershipData) => {
+    const membresias = await membershipService.getAll();
+    const idx = membresias.findIndex(m => m.id === id);
+    if (idx !== -1) {
+      membresias[idx] = { ...membresias[idx], ...membershipData };
+      localStorage.setItem('membresias', JSON.stringify(membresias));
+      return membresias[idx];
+    }
+    throw new Error('Membership not found');
+  },
+  delete: async (id) => {
+    const membresias = await membershipService.getAll();
+    const filteredMembresias = membresias.filter(m => m.id !== id);
+    localStorage.setItem('membresias', JSON.stringify(filteredMembresias));
+    return true;
+  }
 }; 

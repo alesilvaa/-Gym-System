@@ -14,6 +14,11 @@ function getDayShortName(dayIndex) {
   return days[dayIndex];
 }
 
+function getDayName(dayIndex) {
+  const days = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
+  return days[dayIndex];
+}
+
 export default function Dashboard() {
   const { payments, students, classes, attendance, loading: contextLoading, error: contextError } = useApp();
   const [currentDate] = useState(new Date());
@@ -23,11 +28,7 @@ export default function Dashboard() {
     ingresosMensuales: 0,
     clasesHoy: 0,
     pagosPendientes: 0,
-    montoPendiente: 0,
-    tendencias: {
-      alumnos: 0,
-      ingresos: 0
-    }
+    montoPendiente: 0
   });
   const [ingresosData, setIngresosData] = useState([]);
   const [error, setError] = useState(null);
@@ -81,7 +82,7 @@ export default function Dashboard() {
   };
 
   // Justo antes de calcular ingresos mensuales:
-  console.log('Pagos actuales para el gráfico:', payments);
+  // console.log('Pagos actuales para el gráfico:', payments);
   const now = new Date();
   const ingresosMeses = [];
   for (let i = 5; i >= 0; i--) {
@@ -128,10 +129,10 @@ export default function Dashboard() {
     const calculateStats = async () => {
       try {
         setIsLoading(true);
-        const [statsData, attendanceData, incomeData] = await Promise.all([
+        // Eliminar la llamada a dashboardService.getIncomeData y usar ingresosMeses calculado
+        const [statsData, attendanceData] = await Promise.all([
           dashboardService.getStats(),
-          dashboardService.getAttendanceData(),
-          dashboardService.getIncomeData()
+          dashboardService.getAttendanceData()
         ]);
 
         // Calcular alumnos activos (los que tienen estado 'Activo' o no tienen estado definido)
@@ -164,9 +165,15 @@ export default function Dashboard() {
         
         // Calcular clases de hoy
         const today = new Date();
-        const dayName = today.toLocaleDateString('es-ES', { weekday: 'long' }).toLowerCase();
+        const dayName = getDayName(today.getDay());
         const clasesHoy = classes.filter(c => {
-          return c.dias.includes(dayName) && c.estado === 'Activa';
+          // Verificar que la clase esté activa
+          if (c.estado !== 'Activa') return false;
+          
+          // Verificar que el día actual esté en los días de la clase
+          if (!Array.isArray(c.dias)) return false;
+          
+          return c.dias.includes(dayName);
         }).length;
 
         // Calcular pagos pendientes usando la misma lógica que la tabla
@@ -184,49 +191,34 @@ export default function Dashboard() {
           if (alumno.fechaVencimiento) {
             const fechaVencimiento = new Date(alumno.fechaVencimiento);
             const diasRestantes = Math.ceil((fechaVencimiento - today) / (1000 * 60 * 60 * 24));
-            return isPendiente && diasRestantes <= 7;
+            return isPendiente || diasRestantes <= 0;
           }
 
           return false;
-        }).length;
+        });
 
         // Calcular el monto total de pagos pendientes
-        const montoPendiente = payments
-          .filter(p => {
-            const isPendiente = p.estado === 'Pendiente' || p.estado === 'pendiente';
-            const alumno = students.find(s => s.id === p.alumnoId);
-            if (!alumno) return false;
-
-            const fechaInicio = new Date(alumno.fechaInicio);
-            const diasDesdeInicio = Math.ceil((today - fechaInicio) / (1000 * 60 * 60 * 24));
-            if (diasDesdeInicio <= 1) return false;
-
-            if (alumno.fechaVencimiento) {
-              const fechaVencimiento = new Date(alumno.fechaVencimiento);
-              const diasRestantes = Math.ceil((fechaVencimiento - today) / (1000 * 60 * 60 * 24));
-              return isPendiente && diasRestantes <= 7;
-            }
-
-            return false;
-          })
-          .reduce((sum, p) => sum + (Number(p.monto) || 0), 0);
-
-        // Calcular tendencias
-        const tendenciaAlumnos = ((alumnosActivos - (metas.alumnos * 0.8)) / (metas.alumnos * 0.8)) * 100;
-        const tendenciaIngresos = ((ingresosMensuales - (metas.ingresos * 0.8)) / (metas.ingresos * 0.8)) * 100;
+        const montoPendiente = pagosPendientes.reduce((sum, p) => {
+          const alumno = students.find(s => s.id === p.alumnoId);
+          if (!alumno) return sum;
+          
+          // Si el pago está pendiente, usar su monto
+          if (p.estado === 'Pendiente' || p.estado === 'pendiente') {
+            return sum + (Number(p.monto) || 0);
+          }
+          
+          // Si el plan está vencido, usar el monto del plan
+          return sum + (Number(alumno.montoPlan) || 0);
+        }, 0);
 
         setStats({
           alumnosActivos,
           ingresosMensuales,
           clasesHoy,
-          pagosPendientes,
-          montoPendiente,
-          tendencias: {
-            alumnos: Math.round(tendenciaAlumnos),
-            ingresos: Math.round(tendenciaIngresos)
-          }
+          pagosPendientes: pagosPendientes.length,
+          montoPendiente
         });
-        setIngresosData(incomeData);
+        setIngresosData(ingresosMeses.map(m => ({ name: m.mes, ingresos: m.ingresos })));
         setError(null);
       } catch (err) {
         console.error('Error calculating dashboard stats:', err);
@@ -268,8 +260,8 @@ export default function Dashboard() {
       const fechaVencimiento = new Date(alumno.fechaVencimiento);
       const diasRestantes = Math.ceil((fechaVencimiento - hoy) / (1000 * 60 * 60 * 24));
       
-      // Solo mostrar pagos pendientes si están vencidos o próximos a vencer (7 días o menos)
-      return isPendiente && diasRestantes <= 7;
+      // Mostrar pagos pendientes si están vencidos o próximos a vencer (7 días o menos)
+      return isPendiente || diasRestantes <= 0;
     }
 
     return false;
@@ -314,11 +306,11 @@ export default function Dashboard() {
 
       {/* KPIs Principales */}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="bg-white overflow-hidden shadow-sm rounded-lg hover:shadow-md transition-shadow">
-          <div className="p-5">
+        <div className="bg-white overflow-hidden shadow-lg rounded-xl hover:shadow-xl transition-all duration-300 border border-gray-100">
+          <div className="p-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
-                <div className="flex-shrink-0 bg-indigo-500 rounded-lg p-3">
+                <div className="flex-shrink-0 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl p-3">
                   <Users className="h-6 w-6 text-white" />
                 </div>
                 <div className="ml-5">
@@ -326,40 +318,15 @@ export default function Dashboard() {
                   <dd className="text-3xl font-bold text-gray-900">{stats.alumnosActivos}</dd>
                 </div>
               </div>
-              <div className={`flex items-center ${stats.tendencias.alumnos >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                {stats.tendencias.alumnos >= 0 ? (
-                  <TrendingUp className="h-4 w-4 mr-1" />
-                ) : (
-                  <TrendingDown className="h-4 w-4 mr-1" />
-                )}
-                <span className="text-sm">{Math.abs(stats.tendencias.alumnos)}%</span>
-              </div>
-            </div>
-            <div className="mt-4">
-              <div className="h-1 bg-gray-200 rounded-full">
-                <div 
-                  className="h-1 bg-indigo-500 rounded-full transition-all duration-300" 
-                  style={{ width: `${Math.min((stats.alumnosActivos / metas.alumnos) * 100, 100)}%` }}
-                ></div>
-              </div>
-              <div className="flex justify-between items-center mt-2">
-                <p className="text-xs text-gray-500">Meta: {metas.alumnos.toLocaleString()} alumnos</p>
-                <button 
-                  onClick={() => handleEditMeta('alumnos', metas.alumnos)}
-                  className="p-1 text-gray-400 hover:text-gray-600"
-                >
-                  <Edit2 className="h-4 w-4" />
-                </button>
-              </div>
             </div>
           </div>
         </div>
         
-        <div className="bg-white overflow-hidden shadow-sm rounded-lg hover:shadow-md transition-shadow">
-          <div className="p-5">
+        <div className="bg-white overflow-hidden shadow-lg rounded-xl hover:shadow-xl transition-all duration-300 border border-gray-100">
+          <div className="p-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
-                <div className="flex-shrink-0 bg-green-500 rounded-lg p-3">
+                <div className="flex-shrink-0 bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-3">
                   <DollarSign className="h-6 w-6 text-white" />
                 </div>
                 <div className="ml-5">
@@ -367,39 +334,14 @@ export default function Dashboard() {
                   <dd className="text-3xl font-bold text-gray-900">{stats.ingresosMensuales.toLocaleString()} Gs</dd>
                 </div>
               </div>
-              <div className={`flex items-center ${stats.tendencias.ingresos >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                {stats.tendencias.ingresos >= 0 ? (
-                  <TrendingUp className="h-4 w-4 mr-1" />
-                ) : (
-                  <TrendingDown className="h-4 w-4 mr-1" />
-                )}
-                <span className="text-sm">{Math.abs(stats.tendencias.ingresos)}%</span>
-              </div>
-            </div>
-            <div className="mt-4">
-              <div className="h-1 bg-gray-200 rounded-full">
-                <div 
-                  className="h-1 bg-green-500 rounded-full transition-all duration-300" 
-                  style={{ width: `${Math.min((stats.ingresosMensuales / metas.ingresos) * 100, 100)}%` }}
-                ></div>
-              </div>
-              <div className="flex justify-between items-center mt-2">
-                <p className="text-xs text-gray-500">Meta: {metas.ingresos.toLocaleString()} Gs</p>
-                <button 
-                  onClick={() => handleEditMeta('ingresos', metas.ingresos)}
-                  className="p-1 text-gray-400 hover:text-gray-600"
-                >
-                  <Edit2 className="h-4 w-4" />
-                </button>
-              </div>
             </div>
           </div>
         </div>
         
-        <div className="bg-white overflow-hidden shadow-sm rounded-lg hover:shadow-md transition-shadow">
-          <div className="p-5">
+        <div className="bg-white overflow-hidden shadow-lg rounded-xl hover:shadow-xl transition-all duration-300 border border-gray-100">
+          <div className="p-6">
             <div className="flex items-center">
-              <div className="flex-shrink-0 bg-yellow-500 rounded-lg p-3">
+              <div className="flex-shrink-0 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl p-3">
                 <Calendar className="h-6 w-6 text-white" />
               </div>
               <div className="ml-5">
@@ -410,11 +352,11 @@ export default function Dashboard() {
           </div>
         </div>
         
-        <div className="bg-white overflow-hidden shadow-sm rounded-lg hover:shadow-md transition-shadow">
-          <div className="p-5">
+        <div className="bg-white overflow-hidden shadow-lg rounded-xl hover:shadow-xl transition-all duration-300 border border-gray-100">
+          <div className="p-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
-                <div className="flex-shrink-0 bg-red-500 rounded-lg p-3">
+                <div className="flex-shrink-0 bg-gradient-to-br from-red-500 to-red-600 rounded-xl p-3">
                   <CreditCard className="h-6 w-6 text-white" />
                 </div>
                 <div className="ml-5">
@@ -423,103 +365,18 @@ export default function Dashboard() {
                 </div>
               </div>
               <div className="flex items-center text-red-500">
-                <TrendingDown className="h-4 w-4 mr-1" />
-                <span className="text-sm">{stats.montoPendiente.toLocaleString()} Gs</span>
-              </div>
-            </div>
-            <div className="mt-4">
-              <div className="h-1 bg-gray-200 rounded-full">
-                <div 
-                  className="h-1 bg-red-500 rounded-full transition-all duration-300" 
-                  style={{ width: `${Math.min((stats.pagosPendientes / metas.pagosPendientes) * 100, 100)}%` }}
-                ></div>
-              </div>
-              <div className="flex justify-between items-center mt-2">
-                <p className="text-xs text-gray-500">Meta: máximo {metas.pagosPendientes} pendientes</p>
-                <button 
-                  onClick={() => handleEditMeta('pagosPendientes', metas.pagosPendientes)}
-                  className="p-1 text-gray-400 hover:text-gray-600"
-                >
-                  <Edit2 className="h-4 w-4" />
-                </button>
+                <span className="text-sm font-medium">{stats.montoPendiente.toLocaleString()} Gs</span>
               </div>
             </div>
           </div>
         </div>
       </div>
-      
-      {/* Gráficos Principales */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <div className="bg-white shadow-sm rounded-lg p-6 hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900">Ingresos Mensuales</h2>
-              <p className="text-sm text-gray-500">Tendencia de los últimos 6 meses</p>
-            </div>
-          </div>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={ingresosData}>
-                <defs>
-                  <linearGradient id="colorIngresos" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor="#4f46e5" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="name" stroke="#6b7280" />
-                <YAxis stroke="#6b7280" />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'white',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '0.5rem',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                  }}
-                />
-                <Bar 
-                  dataKey="ingresos" 
-                  fill="#4f46e5" 
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-        
-        <div className="bg-white shadow-sm rounded-lg p-6 hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900">Asistencia Semanal</h2>
-              <p className="text-sm text-gray-500">Comparativa con la meta semanal</p>
-            </div>
-          </div>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={asistenciaData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="name" stroke="#6b7280" />
-                <YAxis stroke="#6b7280" />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'white',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '0.5rem',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                  }}
-                />
-                <Bar dataKey="asistencias" fill="#4f46e5" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="esperado" fill="#e5e7eb" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      </div>
-      
+
       {/* Pagos Pendientes */}
-      <div className="bg-white shadow-sm rounded-lg p-6 hover:shadow-md transition-shadow">
+      <div className="bg-white shadow-lg rounded-xl p-6 hover:shadow-xl transition-all duration-300 border border-gray-100">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">Pagos Pendientes</h2>
+            <h2 className="text-xl font-semibold text-gray-900">Pagos Pendientes</h2>
             <p className="text-sm text-gray-500">Requieren atención inmediata</p>
           </div>
         </div>
@@ -553,13 +410,12 @@ export default function Dashboard() {
                   const alumno = students.find(s => s.id === pago.alumnoId);
                   if (!alumno) return null;
 
-                  // Calcular días restantes para el vencimiento
                   const hoy = new Date();
                   const fechaVencimiento = new Date(alumno.fechaVencimiento);
                   const diasRestantes = Math.ceil((fechaVencimiento - hoy) / (1000 * 60 * 60 * 24));
 
                   return (
-                    <tr key={pago.id || idx} className="hover:bg-gray-50">
+                    <tr key={pago.id || idx} className="hover:bg-gray-50 transition-colors duration-150">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">{alumno.nombre}</div>
                       </td>
@@ -574,7 +430,7 @@ export default function Dashboard() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                        <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
                           diasRestantes < 0 ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'
                         }`}>
                           {diasRestantes < 0 ? 'Vencido' : 'Próximo a vencer'}
@@ -588,45 +444,74 @@ export default function Dashboard() {
           </table>
         </div>
       </div>
-
-      {isEditingMeta && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-xl">
-            <h3 className="text-lg font-semibold mb-4">
-              Editar Meta {editingMetaType === 'clases' ? 'Diaria de Clases' : 
-                         editingMetaType === 'alumnos' ? 'de Alumnos' :
-                         editingMetaType === 'ingresos' ? 'de Ingresos' :
-                         'de Pagos Pendientes'}
-            </h3>
-            <input
-              type="number"
-              value={nuevaMeta}
-              onChange={(e) => setNuevaMeta(Number(e.target.value))}
-              className="w-full p-2 border rounded mb-4"
-              min="1"
-              max={editingMetaType === 'ingresos' ? "100000000" : "1000"}
-              step={editingMetaType === 'ingresos' ? "100000" : "1"}
-            />
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => {
-                  setIsEditingMeta(false);
-                  setEditingMetaType(null);
-                }}
-                className="px-4 py-2 text-gray-600 hover:text-gray-800"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleUpdateMeta}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-              >
-                Guardar
-              </button>
+      
+      {/* Gráficos Principales */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div className="bg-white shadow-lg rounded-xl p-6 hover:shadow-xl transition-all duration-300 border border-gray-100">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900">Ingresos Mensuales</h2>
+              <p className="text-sm text-gray-500">Tendencia de los últimos 6 meses</p>
             </div>
           </div>
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={ingresosData}>
+                <defs>
+                  <linearGradient id="colorIngresos" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#4f46e5" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis dataKey="name" stroke="#6b7280" />
+                <YAxis stroke="#6b7280" />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'white',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '0.5rem',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                  }}
+                />
+                <Bar 
+                  dataKey="ingresos" 
+                  fill="url(#colorIngresos)"
+                  radius={[4, 4, 0, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
-      )}
+        
+        <div className="bg-white shadow-lg rounded-xl p-6 hover:shadow-xl transition-all duration-300 border border-gray-100">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900">Asistencia Semanal</h2>
+              <p className="text-sm text-gray-500">Comparativa con la meta semanal</p>
+            </div>
+          </div>
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={asistenciaData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis dataKey="name" stroke="#6b7280" />
+                <YAxis stroke="#6b7280" />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'white',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '0.5rem',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                  }}
+                />
+                <Bar dataKey="asistencias" fill="url(#colorIngresos)" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="esperado" fill="#e5e7eb" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

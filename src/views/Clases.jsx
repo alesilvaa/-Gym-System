@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Calendar, Clock, Users, Plus, Search, Filter, Download, Upload, X, CheckCircle, AlertTriangle, Edit2, Trash2 } from 'lucide-react';
+import { Calendar, Clock, Users, Plus, Search, Filter, Download, Upload, X, CheckCircle, AlertTriangle, Edit2, Trash2, CreditCard } from 'lucide-react';
 import { classesService } from '../services/api';
 import { useApp } from '../context/AppContext';
 import { useEntrenadores } from '../context/EntrenadoresContext';
@@ -40,12 +40,14 @@ export default function Clases() {
     capacidad: '',
     nivel: 'Principiante',
     estado: 'Activa',
-    dias: []
+    dias: [],
+    membresiasPermitidas: []
   });
   const [formError, setFormError] = useState('');
   const [toast, setToast] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
+  const [membresias, setMembresias] = useState([]);
 
   // Cargar datos iniciales
   useEffect(() => {
@@ -56,7 +58,25 @@ export default function Clases() {
     try {
       setLoading(true);
       const clasesData = await classesService.getAll();
+      const storedMembresias = localStorage.getItem('membresias');
+      const membresiasData = storedMembresias ? JSON.parse(storedMembresias) : [];
+      
+      // Asegurarnos de que los entrenadores estén cargados
+      const storedEntrenadores = localStorage.getItem('entrenadores');
+      if (storedEntrenadores) {
+        const entrenadoresData = JSON.parse(storedEntrenadores);
+        if (entrenadoresData.length === 0) {
+          // Si no hay entrenadores, agregar los iniciales
+          const initialEntrenadores = [
+            { id: 1, nombre: 'María Pérez', email: 'maria.entrenadora@email.com', especialidad: 'Yoga', telefono: '0981 123 456', estado: 'Activo' },
+            { id: 2, nombre: 'Juan Gómez', email: 'juan.gomez@email.com', especialidad: 'Spinning', telefono: '0982 654 321', estado: 'Activo' },
+          ];
+          localStorage.setItem('entrenadores', JSON.stringify(initialEntrenadores));
+        }
+      }
+      
       updateClasses(clasesData);
+      setMembresias(membresiasData);
     } catch (error) {
       showToast('Error al cargar los datos', 'error');
     } finally {
@@ -75,7 +95,8 @@ export default function Clases() {
       ...clase,
       instructor: entrenadores.find(t => t.nombre === clase.instructor)?.id || '',
       dias: Array.isArray(clase.dias) ? clase.dias : [],
-      estado: clase.estado || 'Activa'
+      estado: clase.estado || 'Activa',
+      membresiasPermitidas: clase.membresiasPermitidas || []
     } : {
       nombre: '',
       instructor: '',
@@ -84,7 +105,8 @@ export default function Clases() {
       capacidad: '',
       nivel: 'Principiante',
       estado: 'Activa',
-      dias: []
+      dias: [],
+      membresiasPermitidas: []
     });
     setFormError('');
     setShowForm(true);
@@ -111,13 +133,23 @@ export default function Clases() {
     });
   };
 
+  const handleMembresiasChange = (membresiaId) => {
+    setForm(prev => {
+      const currentMembresias = prev.membresiasPermitidas || [];
+      const membresias = currentMembresias.includes(membresiaId)
+        ? currentMembresias.filter(m => m !== membresiaId)
+        : [...currentMembresias, membresiaId];
+      return { ...prev, membresiasPermitidas: membresias };
+    });
+  };
+
   const validateForm = () => {
     if (!form.nombre) return 'El nombre es obligatorio';
-    if (!form.instructor) return 'Debe seleccionar un instructor';
     if (!form.horaInicio) return 'Debe seleccionar una hora de inicio';
     if (!form.horaFin) return 'Debe seleccionar una hora de fin';
     if (!form.capacidad) return 'La capacidad es obligatoria';
     if (!form.dias.length) return 'Debe seleccionar al menos un día';
+    if (!form.membresiasPermitidas.length) return 'Debe seleccionar al menos una membresía';
     return '';
   };
 
@@ -131,13 +163,14 @@ export default function Clases() {
 
     try {
       setLoading(true);
-      const selectedTrainer = entrenadores.find(t => t.id === parseInt(form.instructor));
+      const selectedTrainer = form.instructor ? entrenadores.find(t => t.id === parseInt(form.instructor)) : null;
       const claseData = {
         ...form,
-        instructor: selectedTrainer?.nombre,
+        instructor: selectedTrainer?.nombre || 'Sin asignar',
         capacidad: parseInt(form.capacidad),
         dias: Array.isArray(form.dias) ? form.dias : [],
-        estado: form.estado
+        estado: form.estado,
+        membresiasPermitidas: Array.isArray(form.membresiasPermitidas) ? form.membresiasPermitidas : []
       };
 
       if (editingClase) {
@@ -274,6 +307,9 @@ export default function Clases() {
                   Días
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Membresías
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Estado
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -307,6 +343,22 @@ export default function Clases() {
                   <td className="px-6 py-4">
                     <div className="text-sm text-gray-900">
                       {formatDias(clase.dias)}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex flex-wrap gap-1">
+                      {clase.membresiasPermitidas?.map(membresiaId => {
+                        const membresia = membresias.find(m => m.id === membresiaId);
+                        return membresia ? (
+                          <span
+                            key={membresiaId}
+                            className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800"
+                          >
+                            <CreditCard className="w-3 h-3 mr-1" />
+                            {membresia.nombre}
+                          </span>
+                        ) : null;
+                      })}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -390,7 +442,7 @@ export default function Clases() {
                     onChange={handleFormChange}
                     className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   >
-                    <option value="">Seleccionar instructor</option>
+                    <option value="">Sin asignar</option>
                     {entrenadores.map(trainer => (
                       <option key={trainer.id} value={trainer.id}>
                         {trainer.nombre}
@@ -498,6 +550,35 @@ export default function Clases() {
                       </label>
                     ))}
                   </div>
+                </div>
+
+                {/* Membresías Permitidas */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Membresías Permitidas
+                    <span className="text-red-500 ml-1">*</span>
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    {membresias.map(membresia => (
+                      <label key={membresia.id} className="inline-flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={form.membresiasPermitidas.includes(membresia.id)}
+                          onChange={() => handleMembresiasChange(membresia.id)}
+                          className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        />
+                        <span className="ml-2 text-sm text-gray-700">
+                          {membresia.nombre}
+                          <span className="text-gray-500 text-xs block">
+                            {membresia.descripcion}
+                          </span>
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                  {formError.includes('membresias') && (
+                    <p className="mt-1 text-sm text-red-600">Debe seleccionar al menos una membresía</p>
+                  )}
                 </div>
 
                 {formError && (

@@ -8,29 +8,65 @@ const initialEntrenadores = [
 const EntrenadoresContext = createContext();
 
 export function useEntrenadores() {
-  return useContext(EntrenadoresContext);
+  const context = useContext(EntrenadoresContext);
+  if (!context) {
+    throw new Error('useEntrenadores debe ser usado dentro de un EntrenadoresProvider');
+  }
+  return context;
 }
 
 export function EntrenadoresProvider({ children }) {
   const [entrenadores, setEntrenadores] = useState(() => {
-    const stored = localStorage.getItem('entrenadores');
-    return stored ? JSON.parse(stored) : initialEntrenadores;
+    try {
+      const stored = localStorage.getItem('entrenadores');
+      return stored ? JSON.parse(stored) : initialEntrenadores;
+    } catch (error) {
+      console.error('Error al cargar entrenadores del localStorage:', error);
+      return initialEntrenadores;
+    }
   });
 
   useEffect(() => {
-    localStorage.setItem('entrenadores', JSON.stringify(entrenadores));
+    try {
+      localStorage.setItem('entrenadores', JSON.stringify(entrenadores));
+    } catch (error) {
+      console.error('Error al guardar entrenadores en localStorage:', error);
+    }
   }, [entrenadores]);
 
   const addEntrenador = (entrenador) => {
-    setEntrenadores(prev => [...prev, { ...entrenador, id: Date.now() }]);
+    try {
+      const newEntrenador = {
+        ...entrenador,
+        id: Date.now(),
+        estado: entrenador.estado || 'Activo'
+      };
+      setEntrenadores(prev => [...prev, newEntrenador]);
+      return newEntrenador;
+    } catch (error) {
+      console.error('Error al agregar entrenador:', error);
+      throw error;
+    }
   };
 
   const updateEntrenador = (id, data) => {
-    setEntrenadores(prev => prev.map(e => e.id === id ? { ...data, id } : e));
+    try {
+      const updatedEntrenador = { ...data, id };
+      setEntrenadores(prev => prev.map(e => e.id === id ? updatedEntrenador : e));
+      return updatedEntrenador;
+    } catch (error) {
+      console.error('Error al actualizar entrenador:', error);
+      throw error;
+    }
   };
 
   const deleteEntrenador = (id) => {
-    setEntrenadores(prev => prev.filter(e => e.id !== id));
+    try {
+      setEntrenadores(prev => prev.filter(e => e.id !== id));
+    } catch (error) {
+      console.error('Error al eliminar entrenador:', error);
+      throw error;
+    }
   };
 
   return (

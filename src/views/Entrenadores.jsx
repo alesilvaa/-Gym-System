@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Users, Plus, Edit2, Trash2, X, CheckCircle, AlertTriangle, Search, Filter, ChevronUp, ChevronDown, Loader2 } from 'lucide-react';
 import { useEntrenadores } from '../context/EntrenadoresContext';
 
@@ -7,7 +7,7 @@ const ITEMS_PER_PAGE = 10;
 function Toast({ message, type, onClose }) {
   return (
     <div className={`fixed top-6 right-6 z-50 px-4 py-3 rounded shadow-lg flex items-center gap-2 ${type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-      {type === 'success' ? <CheckCircle className="w-5 h-5" /> : <AlertTriangle className="w-5 h-5" />}
+      {type === 'success' ? <CheckCircle className="w-5 h-5" /> : <AlertTriangle className="h-5 h-5" />}
       <span>{message}</span>
       <button onClick={onClose} className="ml-2 text-lg font-bold">×</button>
     </div>
@@ -20,7 +20,7 @@ export default function Entrenadores() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [entrenadorToDelete, setEntrenadorToDelete] = useState(null);
   const [editingEntrenador, setEditingEntrenador] = useState(null);
-  const [form, setForm] = useState({ nombre: '', email: '', especialidad: '', telefono: '', estado: 'Activo' });
+  const [form, setForm] = useState({ nombre: '', email: '', telefono: '', estado: 'Activo' });
   const [formError, setFormError] = useState('');
   const [toast, setToast] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -28,15 +28,30 @@ export default function Entrenadores() {
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
   const [currentPage, setCurrentPage] = useState(1);
   const [filters, setFilters] = useState({
-    estado: 'todos',
-    especialidad: 'todos'
+    estado: 'todos'
   });
   const [showFilters, setShowFilters] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
+  // Debug logs
+  useEffect(() => {
+    console.log('Entrenadores:', entrenadores);
+  }, [entrenadores]);
+
   const handleOpenForm = (entrenador = null) => {
-    setEditingEntrenador(entrenador);
-    setForm(entrenador ? { ...entrenador } : { nombre: '', email: '', especialidad: '', telefono: '', estado: 'Activo' });
+    console.log('Opening form with:', entrenador);
+    if (entrenador) {
+      setEditingEntrenador(entrenador);
+      setForm({
+        nombre: entrenador.nombre || '',
+        email: entrenador.email || '',
+        telefono: entrenador.telefono || '',
+        estado: entrenador.estado || 'Activo'
+      });
+    } else {
+      setEditingEntrenador(null);
+      setForm({ nombre: '', email: '', telefono: '', estado: 'Activo' });
+    }
     setFormError('');
     setShowForm(true);
     setHasUnsavedChanges(false);
@@ -47,18 +62,36 @@ export default function Entrenadores() {
       if (window.confirm('¿Estás seguro de que deseas cerrar? Los cambios no guardados se perderán.')) {
         setShowForm(false);
         setEditingEntrenador(null);
+        setForm({ nombre: '', email: '', telefono: '', estado: 'Activo' });
         setFormError('');
         setHasUnsavedChanges(false);
       }
     } else {
       setShowForm(false);
       setEditingEntrenador(null);
+      setForm({ nombre: '', email: '', telefono: '', estado: 'Activo' });
       setFormError('');
     }
   };
 
   const handleFormChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    console.log('Form change:', name, value);
+    
+    // Formatear el teléfono mientras se escribe
+    if (name === 'telefono') {
+      const digits = value.replace(/\D/g, '');
+      let formatted = digits;
+      if (digits.length > 4) {
+        formatted = `${digits.slice(0, 4)} ${digits.slice(4)}`;
+      }
+      if (digits.length > 7) {
+        formatted = `${digits.slice(0, 4)} ${digits.slice(4, 7)} ${digits.slice(7)}`;
+      }
+      setForm(prev => ({ ...prev, [name]: formatted }));
+    } else {
+      setForm(prev => ({ ...prev, [name]: value }));
+    }
     setHasUnsavedChanges(true);
   };
 
@@ -67,14 +100,20 @@ export default function Entrenadores() {
     if (!form.nombre.trim()) errors.push('El nombre es obligatorio');
     if (!form.email.trim()) errors.push('El email es obligatorio');
     if (!form.email.includes('@')) errors.push('Email inválido');
-    if (!form.especialidad.trim()) errors.push('La especialidad es obligatoria');
     if (!form.telefono.trim()) errors.push('El teléfono es obligatorio');
-    if (!/^\d{4}\s\d{3}\s\d{3}$/.test(form.telefono)) errors.push('Formato de teléfono inválido (ejemplo: 0981 123 456)');
+    if (!/^\d{4}[- ]?\d{3}[- ]?\d{3}$/.test(form.telefono)) {
+      errors.push('Formato de teléfono inválido (ejemplo: 0981 123 456 o 0981-123-456)');
+    }
     return errors;
   };
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
+    e.stopPropagation();
+    
+    if (loading) return;
+    
+    console.log('Submitting form:', form);
     setLoading(true);
     const errors = validateForm();
     
@@ -85,22 +124,31 @@ export default function Entrenadores() {
     }
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Formatear el teléfono antes de guardar
+      const formattedPhone = form.telefono.replace(/[- ]/g, ' ').trim();
       const formData = {
         ...form,
+        telefono: formattedPhone,
         estado: form.estado || 'Activo'
       };
+      
       if (editingEntrenador) {
-        updateEntrenador(editingEntrenador.id, formData);
+        console.log('Updating entrenador:', editingEntrenador.id, formData);
+        await updateEntrenador(editingEntrenador.id, formData);
         setToast({ message: 'Entrenador actualizado correctamente', type: 'success' });
       } else {
-        addEntrenador(formData);
+        console.log('Adding new entrenador:', formData);
+        await addEntrenador(formData);
         setToast({ message: 'Entrenador agregado correctamente', type: 'success' });
       }
+      
       setShowForm(false);
       setEditingEntrenador(null);
+      setForm({ nombre: '', email: '', telefono: '', estado: 'Activo' });
+      setFormError('');
       setHasUnsavedChanges(false);
     } catch (error) {
+      console.error('Error in form submission:', error);
       setToast({ message: 'Error al guardar el entrenador', type: 'error' });
     } finally {
       setLoading(false);
@@ -108,17 +156,21 @@ export default function Entrenadores() {
   };
 
   const handleDelete = (entrenador) => {
+    console.log('Deleting entrenador:', entrenador);
     setEntrenadorToDelete(entrenador);
     setShowDeleteConfirm(true);
   };
 
   const confirmDelete = async () => {
+    if (!entrenadorToDelete) return;
+    
     setLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      deleteEntrenador(entrenadorToDelete.id);
+      console.log('Confirming delete for:', entrenadorToDelete.id);
+      await deleteEntrenador(entrenadorToDelete.id);
       setToast({ message: 'Entrenador eliminado correctamente', type: 'success' });
     } catch (error) {
+      console.error('Error deleting entrenador:', error);
       setToast({ message: 'Error al eliminar el entrenador', type: 'error' });
     } finally {
       setLoading(false);
@@ -157,11 +209,9 @@ export default function Entrenadores() {
     return data.filter(entrenador => {
       const matchesSearch = 
         entrenador.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        entrenador.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        entrenador.especialidad.toLowerCase().includes(searchTerm.toLowerCase());
+        entrenador.email.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesEstado = filters.estado === 'todos' || entrenador.estado === filters.estado;
-      const matchesEspecialidad = filters.especialidad === 'todos' || entrenador.especialidad === filters.especialidad;
-      return matchesSearch && matchesEstado && matchesEspecialidad;
+      return matchesSearch && matchesEstado;
     });
   };
 
@@ -173,19 +223,17 @@ export default function Entrenadores() {
     currentPage * ITEMS_PER_PAGE
   );
 
-  const especialidades = [...new Set(entrenadores.map(e => e.especialidad))];
-
   return (
     <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Entrenadores</h1>
           <p className="mt-1 text-sm text-gray-500">
-            Gestiona los entrenadores del gimnasio y sus especialidades
+            Gestiona los entrenadores del gimnasio
           </p>
         </div>
         <button 
-          onClick={() => handleOpenForm()}
+          onClick={handleOpenForm}
           className="px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center transition-colors duration-200 shadow-sm"
         >
           <Plus className="h-5 w-5 mr-2" />
@@ -203,7 +251,7 @@ export default function Entrenadores() {
                 </div>
                 <input
                   type="text"
-                  placeholder="Buscar por nombre, email o especialidad..."
+                  placeholder="Buscar por nombre o email..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
@@ -231,7 +279,7 @@ export default function Entrenadores() {
           </div>
 
           {showFilters && (
-            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
+            <div className="mt-4 p-4 bg-gray-50 rounded-lg">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
                 <select
@@ -242,19 +290,6 @@ export default function Entrenadores() {
                   <option value="todos">Todos los estados</option>
                   <option value="Activo">Activo</option>
                   <option value="Inactivo">Inactivo</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Especialidad</label>
-                <select
-                  value={filters.especialidad}
-                  onChange={(e) => setFilters({ ...filters, especialidad: e.target.value })}
-                  className="block w-full pl-3 pr-10 py-2.5 text-base border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                >
-                  <option value="todos">Todas las especialidades</option>
-                  {especialidades.map(esp => (
-                    <option key={esp} value={esp}>{esp}</option>
-                  ))}
                 </select>
               </div>
             </div>
@@ -304,18 +339,6 @@ export default function Entrenadores() {
                 <th 
                   scope="col" 
                   className="px-6 py-3.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-200"
-                  onClick={() => handleSort('especialidad')}
-                >
-                  <div className="flex items-center">
-                    Especialidad
-                    {sortConfig.key === 'especialidad' && (
-                      sortConfig.direction === 'asc' ? <ChevronUp className="ml-1 h-4 w-4" /> : <ChevronDown className="ml-1 h-4 w-4" />
-                    )}
-                  </div>
-                </th>
-                <th 
-                  scope="col" 
-                  className="px-6 py-3.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-200"
                   onClick={() => handleSort('estado')}
                 >
                   <div className="flex items-center">
@@ -352,11 +375,6 @@ export default function Entrenadores() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">{entrenador.telefono}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                      {entrenador.especialidad}
-                    </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
@@ -456,7 +474,7 @@ export default function Entrenadores() {
 
       {/* Modal Formulario */}
       {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl shadow-2xl p-8 w-full max-w-2xl relative animate-fade-in">
             <div className="absolute top-4 right-4">
               <button 
@@ -556,34 +574,6 @@ export default function Entrenadores() {
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Especialidad
-                      <span className="text-red-500 ml-1">*</span>
-                    </label>
-                    <div className="relative">
-                      <input
-                        name="especialidad"
-                        value={form.especialidad}
-                        onChange={handleFormChange}
-                        className={`w-full px-4 py-2.5 rounded-lg border ${
-                          formError.includes('especialidad') 
-                            ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
-                            : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
-                        } focus:outline-none focus:ring-2 transition-colors duration-200`}
-                        placeholder="Ej: Yoga, Spinning, etc."
-                      />
-                      {formError.includes('especialidad') && (
-                        <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                          <AlertTriangle className="h-5 w-5 text-red-500" />
-                        </div>
-                      )}
-                    </div>
-                    {formError.includes('especialidad') && (
-                      <p className="mt-1 text-sm text-red-600">La especialidad es obligatoria</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
                       Teléfono
                       <span className="text-red-500 ml-1">*</span>
                     </label>
@@ -613,22 +603,22 @@ export default function Entrenadores() {
                       </p>
                     )}
                   </div>
-                </div>
-              </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Estado
-                </label>
-                <select
-                  name="estado"
-                  value={form.estado || 'Activo'}
-                  onChange={handleFormChange}
-                  className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition-colors duration-200"
-                >
-                  <option value="Activo">Activo</option>
-                  <option value="Inactivo">Inactivo</option>
-                </select>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Estado
+                    </label>
+                    <select
+                      name="estado"
+                      value={form.estado || 'Activo'}
+                      onChange={handleFormChange}
+                      className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition-colors duration-200"
+                    >
+                      <option value="Activo">Activo</option>
+                      <option value="Inactivo">Inactivo</option>
+                    </select>
+                  </div>
+                </div>
               </div>
 
               <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">

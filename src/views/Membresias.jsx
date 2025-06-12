@@ -1,10 +1,6 @@
 import { useState, useEffect } from 'react';
 import { CreditCard, Plus, Edit2, Trash2, X, CheckCircle, AlertTriangle, Search } from 'lucide-react';
-
-const initialMembresias = [
-  { id: 1, nombre: 'Básica', precio: 90000, duracion: 30, descripcion: 'Acceso a sala de musculación y cardio.' },
-  { id: 2, nombre: 'Premium', precio: 120000, duracion: 30, descripcion: 'Acceso total + clases grupales.' },
-];
+import { membershipService } from '../services/api';
 
 function Toast({ message, type, onClose }) {
   return (
@@ -17,10 +13,7 @@ function Toast({ message, type, onClose }) {
 }
 
 export default function Membresias() {
-  const [membresias, setMembresias] = useState(() => {
-    const stored = localStorage.getItem('membresias');
-    return stored ? JSON.parse(stored) : initialMembresias;
-  });
+  const [membresias, setMembresias] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [editingMembresia, setEditingMembresia] = useState(null);
   const [form, setForm] = useState({ nombre: '', precio: '', duracion: '', descripcion: '' });
@@ -28,10 +21,30 @@ export default function Membresias() {
   const [showDelete, setShowDelete] = useState(false);
   const [membresiaToDelete, setMembresiaToDelete] = useState(null);
   const [toast, setToast] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
+  // Cargar membresías al iniciar
   useEffect(() => {
-    localStorage.setItem('membresias', JSON.stringify(membresias));
-  }, [membresias]);
+    loadMembresias();
+  }, []);
+
+  const loadMembresias = async () => {
+    try {
+      setLoading(true);
+      const membresiasData = await membershipService.getAll();
+      setMembresias(membresiasData);
+    } catch (error) {
+      showToast('Error al cargar las membresías', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const showToast = (message, type) => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   const handleOpenForm = (membresia = null) => {
     setEditingMembresia(membresia);
@@ -57,22 +70,31 @@ export default function Membresias() {
     return '';
   };
 
-  const handleFormSubmit = (e) => {
+  const handleFormSubmit = async (e) => {
     e.preventDefault();
     const error = validateForm();
     if (error) {
       setFormError(error);
       return;
     }
-    if (editingMembresia) {
-      setMembresias(membresias.map(m => m.id === editingMembresia.id ? { ...form, id: editingMembresia.id } : m));
-      setToast({ message: 'Membresía actualizada correctamente', type: 'success' });
-    } else {
-      setMembresias([...membresias, { ...form, id: Date.now() }]);
-      setToast({ message: 'Membresía agregada correctamente', type: 'success' });
+
+    try {
+      setLoading(true);
+      if (editingMembresia) {
+        await membershipService.update(editingMembresia.id, form);
+        showToast('Membresía actualizada correctamente', 'success');
+      } else {
+        await membershipService.create(form);
+        showToast('Membresía agregada correctamente', 'success');
+      }
+      await loadMembresias();
+      setShowForm(false);
+      setEditingMembresia(null);
+    } catch (error) {
+      showToast(error.message || 'Error al guardar la membresía', 'error');
+    } finally {
+      setLoading(false);
     }
-    setShowForm(false);
-    setEditingMembresia(null);
   };
 
   const handleDelete = (membresia) => {
@@ -80,12 +102,25 @@ export default function Membresias() {
     setShowDelete(true);
   };
 
-  const confirmDelete = () => {
-    setMembresias(membresias.filter(m => m.id !== membresiaToDelete.id));
-    setToast({ message: 'Membresía eliminada', type: 'success' });
-    setShowDelete(false);
-    setMembresiaToDelete(null);
+  const confirmDelete = async () => {
+    try {
+      setLoading(true);
+      await membershipService.delete(membresiaToDelete.id);
+      await loadMembresias();
+      showToast('Membresía eliminada', 'success');
+      setShowDelete(false);
+      setMembresiaToDelete(null);
+    } catch (error) {
+      showToast(error.message || 'Error al eliminar la membresía', 'error');
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const filteredMembresias = membresias.filter(m =>
+    m.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    m.descripcion.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
@@ -114,6 +149,8 @@ export default function Membresias() {
             <input
               type="text"
               placeholder="Buscar membresías..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
               className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
             />
           </div>
@@ -131,11 +168,20 @@ export default function Membresias() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {membresias.length === 0 ? (
+              {loading ? (
+                <tr>
+                  <td colSpan={5} className="text-center py-8">
+                    <div className="flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                      <span className="ml-3 text-gray-600">Cargando membresías...</span>
+                    </div>
+                  </td>
+                </tr>
+              ) : filteredMembresias.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="text-center py-8 text-gray-400">No hay membresías registradas.</td>
                 </tr>
-              ) : membresias.map(m => (
+              ) : filteredMembresias.map(m => (
                 <tr key={m.id} className="hover:bg-gray-50 transition-colors duration-200">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
@@ -290,7 +336,7 @@ export default function Membresias() {
                       <span className="text-red-500 ml-1">*</span>
                     </label>
                     <div className="relative">
-                      <input
+                      <select
                         name="duracion"
                         value={form.duracion}
                         onChange={handleFormChange}
@@ -299,10 +345,13 @@ export default function Membresias() {
                             ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
                             : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
                         } focus:outline-none focus:ring-2 transition-colors duration-200`}
-                        type="number"
-                        min="1"
-                        placeholder="30"
-                      />
+                      >
+                        <option value="">Seleccionar duración</option>
+                        <option value="1">1 día</option>
+                        <option value="7">7 días</option>
+                        <option value="15">15 días</option>
+                        <option value="30">30 días</option>
+                      </select>
                       {formError.includes('duracion') && (
                         <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                           <AlertTriangle className="h-5 w-5 text-red-500" />
@@ -341,10 +390,20 @@ export default function Membresias() {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium flex items-center transition-colors duration-200"
+                  disabled={loading}
+                  className="px-4 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium flex items-center transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                  {editingMembresia ? 'Guardar Cambios' : 'Agregar Membresía'}
+                  {loading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Guardando...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      {editingMembresia ? 'Guardar Cambios' : 'Agregar Membresía'}
+                    </>
+                  )}
                 </button>
               </div>
             </form>
@@ -379,10 +438,20 @@ export default function Membresias() {
               </button>
               <button
                 onClick={confirmDelete}
-                className="px-4 py-2.5 rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium flex items-center transition-colors duration-200"
+                disabled={loading}
+                className="px-4 py-2.5 rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium flex items-center transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Eliminar
+                {loading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Eliminando...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Eliminar
+                  </>
+                )}
               </button>
             </div>
           </div>

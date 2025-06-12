@@ -1,14 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Users, Plus, Search, Filter, Download, Upload, X, CheckCircle, AlertTriangle, Trash2, Edit2, Clock, CreditCard } from 'lucide-react';
-import { studentsService, paymentsService } from '../services/api';
+import { studentsService, paymentsService, membershipService } from '../services/api';
 import { useApp } from '../context/AppContext';
-
-// Datos de ejemplo de planes
-const planes = [
-  { id: 1, nombre: 'Básico', duracion: 30, precio: 150000 },
-  { id: 2, nombre: 'Premium', duracion: 30, precio: 250000 },
-  { id: 3, nombre: 'Anual', duracion: 365, precio: 2500000 }
-];
 
 // Función para formatear moneda
 const formatCurrency = (amount) => {
@@ -60,6 +53,7 @@ export default function Alumnos() {
     updatePayments
   } = useApp();
   const [alumnos, setAlumnos] = useState([]);
+  const [membresias, setMembresias] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [alumnoToDelete, setAlumnoToDelete] = useState(null);
@@ -76,6 +70,19 @@ export default function Alumnos() {
   const [formError, setFormError] = useState('');
   const [toast, setToast] = useState(null);
   const [search, setSearch] = useState('');
+
+  // Cargar membresías al iniciar
+  useEffect(() => {
+    const loadMembresias = async () => {
+      try {
+        const membresiasData = await membershipService.getAll();
+        setMembresias(membresiasData);
+      } catch (error) {
+        showToast('Error al cargar las membresías', 'error');
+      }
+    };
+    loadMembresias();
+  }, []);
 
   // Sincronizar alumnos locales con los del contexto global
   useEffect(() => {
@@ -105,45 +112,47 @@ export default function Alumnos() {
     }
 
     const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0); // Normalizar la fecha actual a inicio del día
     const fechaVencimiento = new Date(alumno.fechaVencimiento);
+    fechaVencimiento.setHours(0, 0, 0, 0); // Normalizar la fecha de vencimiento a inicio del día
+    
     const diasRestantes = Math.ceil((fechaVencimiento - hoy) / (1000 * 60 * 60 * 24));
     const pagosPendientes = getPendingPayments(alumno.id);
 
-    // Si el alumno tiene pagos pendientes pero está dentro de su periodo inicial
+    // Si el alumno tiene pagos pendientes
     if (pagosPendientes.length > 0) {
-      const fechaInicio = new Date(alumno.fechaInicio);
-      const diasDesdeInicio = Math.ceil((hoy - fechaInicio) / (1000 * 60 * 60 * 24));
-      
-      // Si el alumno se inscribió hoy o ayer, considerarlo como "Al día"
-      if (diasDesdeInicio <= 1) {
-        return {
-          estado: 'Al día',
-          color: 'green',
-          dias: diasRestantes,
-          pagosPendientes: pagosPendientes.length
-        };
-      }
+      return {
+        estado: 'Pago Pendiente',
+        color: 'red',
+        dias: diasRestantes,
+        pagosPendientes: pagosPendientes.length
+      };
     }
 
+    // Si la membresía está vencida
     if (diasRestantes < 0) {
       return {
         estado: 'Vencido',
         color: 'red',
         dias: Math.abs(diasRestantes)
       };
-    } else if (diasRestantes <= 7) {
+    }
+    
+    // Si la membresía está por vencer (7 días o menos)
+    if (diasRestantes <= 7) {
       return {
         estado: 'Próximo a vencer',
         color: 'yellow',
         dias: diasRestantes
       };
-    } else {
-      return {
-        estado: 'Al día',
-        color: 'green',
-        dias: diasRestantes
-      };
     }
+    
+    // Si la membresía está al día
+    return {
+      estado: 'Al día',
+      color: 'green',
+      dias: diasRestantes
+    };
   };
 
   const handleOpenForm = (alumno = null) => {
@@ -176,12 +185,15 @@ export default function Alumnos() {
   };
 
   const handleEditAlumno = (alumno) => {
+    // Encontrar el plan correspondiente al nombre del plan del alumno
+    const planSeleccionado = membresias.find(p => p.nombre === alumno.plan);
+    
     setEditingAlumno(alumno);
     setForm({
       nombre: alumno.nombre || '',
       email: alumno.email || '',
       telefono: alumno.telefono || '',
-      plan: alumno.plan || '',
+      plan: planSeleccionado ? planSeleccionado.id.toString() : '',
       montoPlan: alumno.montoPlan || '',
       fechaInicio: alumno.fechaInicio || new Date().toISOString().split('T')[0],
       estado: alumno.estado || 'Activo'
@@ -194,7 +206,7 @@ export default function Alumnos() {
     
     if (name === 'plan') {
       // Cuando se selecciona un plan, actualizar automáticamente el monto
-      const planSeleccionado = planes.find(p => p.id === parseInt(value));
+      const planSeleccionado = membresias.find(p => p.id === parseInt(value));
       setForm(prev => ({
         ...prev,
         [name]: value,
@@ -214,11 +226,11 @@ export default function Alumnos() {
   };
 
   const calcularFechaVencimiento = (fechaInicio, planId) => {
-    const plan = planes.find(p => p.id === parseInt(planId));
+    const plan = membresias.find(p => p.id === parseInt(planId));
     if (!plan) return fechaInicio;
     
     const fecha = new Date(fechaInicio);
-    fecha.setDate(fecha.getDate() + plan.duracion);
+    fecha.setDate(fecha.getDate() + plan.duracion); // Sumamos exactamente los días del plan
     return fecha.toISOString().split('T')[0];
   };
 
@@ -232,10 +244,10 @@ export default function Alumnos() {
 
     try {
       // Calcular la fecha de vencimiento basada en el plan seleccionado
-      const planSeleccionado = planes.find(p => p.id === parseInt(form.plan));
+      const planSeleccionado = membresias.find(p => p.id === parseInt(form.plan));
       const fechaInicio = new Date(form.fechaInicio);
       const fechaVencimiento = new Date(fechaInicio);
-      fechaVencimiento.setDate(fechaInicio.getDate() + planSeleccionado.duracion);
+      fechaVencimiento.setDate(fechaInicio.getDate() + parseInt(planSeleccionado.duracion)); // Usar la duración del plan
 
       const alumnoData = {
         ...form,
@@ -495,8 +507,8 @@ export default function Alumnos() {
                             <div className={`text-xs ${
                               estadoPago.color === 'red' ? 'text-red-600' : 'text-gray-600'
                             }`}>
-                              {estadoPago.dias < 0 
-                                ? `Vencido hace ${Math.abs(estadoPago.dias)} días`
+                              {estadoPago.estado === 'Vencido' 
+                                ? `Vencido hace ${estadoPago.dias} días`
                                 : `Vence en ${estadoPago.dias} días`}
                             </div>
                           )}
@@ -679,7 +691,7 @@ export default function Alumnos() {
                         required
                       >
                         <option value="">Seleccionar plan</option>
-                        {planes.map(plan => (
+                        {membresias.map(plan => (
                           <option key={plan.id} value={plan.id}>
                             {plan.nombre} - {formatCurrency(plan.precio)}
                           </option>
