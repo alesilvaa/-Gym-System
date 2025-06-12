@@ -25,7 +25,9 @@ const tabNames = {
   'configuracion': { name: 'Configuración', icon: Settings, path: '/configuracion' },
   'mis-clases': { name: 'Mis Clases', icon: BookOpen, path: '/mis-clases' },
   'mis-pagos': { name: 'Mis Pagos', icon: CreditCard, path: '/mis-pagos' },
-  'mis-clases-entrenador': { name: 'Mis Clases', icon: BookOpen, path: '/mis-clases-entrenador' }
+  'mis-clases-entrenador': { name: 'Mis Clases', icon: BookOpen, path: '/mis-clases-entrenador' },
+  'membresias': { name: 'Membresías', icon: CreditCard, path: '/membresias' },
+  'usuarios': { name: 'Usuarios', icon: Users, path: '/usuarios' }
 };
 
 export default function Sidebar({ tabsDisponibles, currentUser, onLogout, collapsed, setCollapsed }) {

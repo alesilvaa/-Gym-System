@@ -10,6 +10,8 @@ import MisClases from "../views/MisClases.jsx";
 import MisPagos from "../views/MisPagos.jsx";
 import MisClasesEntrenador from "../views/MisClasesEntrenador.jsx";
 import Entrenadores from '../views/Entrenadores.jsx';
+import Membresias from "../views/Membresias.jsx";
+import Usuarios from "../views/Usuarios.jsx";
 
 export default function TabWrapper({ activeTab, currentUser }) {
   // Si el usuario es entrenador, solo puede ver MisClasesEntrenador
@@ -43,6 +45,10 @@ export default function TabWrapper({ activeTab, currentUser }) {
       return <MisPagos />;
     case 'entrenadores':
       return <Entrenadores />;
+    case 'membresias':
+      return <Membresias />;
+    case 'usuarios':
+      return <Usuarios />;
     default:
       return <div className="p-6">Vista no disponible</div>;
   }

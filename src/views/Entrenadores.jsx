@@ -1,10 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Users, Plus, Edit2, Trash2, X, CheckCircle, AlertTriangle, Search, Filter, ChevronUp, ChevronDown, Loader2 } from 'lucide-react';
-
-const initialEntrenadores = [
-  { id: 1, nombre: 'María Pérez', email: 'maria.entrenadora@email.com', especialidad: 'Yoga', telefono: '0981 123 456', estado: 'Activo' },
-  { id: 2, nombre: 'Juan Gómez', email: 'juan.gomez@email.com', especialidad: 'Spinning', telefono: '0982 654 321', estado: 'Activo' },
-];
+import { useEntrenadores } from '../context/EntrenadoresContext';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -19,10 +15,7 @@ function Toast({ message, type, onClose }) {
 }
 
 export default function Entrenadores() {
-  const [entrenadores, setEntrenadores] = useState(() => {
-    const stored = localStorage.getItem('entrenadores');
-    return stored ? JSON.parse(stored) : initialEntrenadores;
-  });
+  const { entrenadores, addEntrenador, updateEntrenador, deleteEntrenador } = useEntrenadores();
   const [showForm, setShowForm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [entrenadorToDelete, setEntrenadorToDelete] = useState(null);
@@ -40,11 +33,6 @@ export default function Entrenadores() {
   });
   const [showFilters, setShowFilters] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-
-  // Sincroniza entrenadores con localStorage
-  useEffect(() => {
-    localStorage.setItem('entrenadores', JSON.stringify(entrenadores));
-  }, [entrenadores]);
 
   const handleOpenForm = (entrenador = null) => {
     setEditingEntrenador(entrenador);
@@ -97,19 +85,16 @@ export default function Entrenadores() {
     }
 
     try {
-      // Simulamos una operación asíncrona
       await new Promise(resolve => setTimeout(resolve, 500));
-
       const formData = {
         ...form,
-        estado: form.estado || 'Activo' // Ensure estado is always set
+        estado: form.estado || 'Activo'
       };
-
       if (editingEntrenador) {
-        setEntrenadores(entrenadores.map(e => e.id === editingEntrenador.id ? { ...formData, id: editingEntrenador.id } : e));
+        updateEntrenador(editingEntrenador.id, formData);
         setToast({ message: 'Entrenador actualizado correctamente', type: 'success' });
       } else {
-        setEntrenadores([...entrenadores, { ...formData, id: Date.now() }]);
+        addEntrenador(formData);
         setToast({ message: 'Entrenador agregado correctamente', type: 'success' });
       }
       setShowForm(false);
@@ -130,9 +115,8 @@ export default function Entrenadores() {
   const confirmDelete = async () => {
     setLoading(true);
     try {
-      // Simulamos una operación asíncrona
       await new Promise(resolve => setTimeout(resolve, 500));
-      setEntrenadores(entrenadores.filter(e => e.id !== entrenadorToDelete.id));
+      deleteEntrenador(entrenadorToDelete.id);
       setToast({ message: 'Entrenador eliminado correctamente', type: 'success' });
     } catch (error) {
       setToast({ message: 'Error al eliminar el entrenador', type: 'error' });
@@ -158,7 +142,6 @@ export default function Entrenadores() {
 
   const getSortedData = (data) => {
     if (!sortConfig.key) return data;
-
     return [...data].sort((a, b) => {
       if (a[sortConfig.key] < b[sortConfig.key]) {
         return sortConfig.direction === 'asc' ? -1 : 1;
@@ -176,10 +159,8 @@ export default function Entrenadores() {
         entrenador.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
         entrenador.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
         entrenador.especialidad.toLowerCase().includes(searchTerm.toLowerCase());
-      
       const matchesEstado = filters.estado === 'todos' || entrenador.estado === filters.estado;
       const matchesEspecialidad = filters.especialidad === 'todos' || entrenador.especialidad === filters.especialidad;
-
       return matchesSearch && matchesEstado && matchesEspecialidad;
     });
   };

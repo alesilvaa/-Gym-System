@@ -12,6 +12,8 @@ import Cobros from './views/Cobros';
 import Entrenadores from './views/Entrenadores';
 import MisClasesEntrenador from './views/MisClasesEntrenador';
 import ReceptionistDashboard from './views/ReceptionistDashboard';
+import Membresias from './views/Membresias';
+import Usuarios from './views/Usuarios';
 
 export default function AppRoutes() {
   return (
@@ -30,6 +32,8 @@ export default function AppRoutes() {
       <Route path="/entrenadores" element={<Entrenadores />} />
       <Route path="/mis-clases-entrenador" element={<MisClasesEntrenador />} />
       <Route path="/dashboard-recepcionista" element={<ReceptionistDashboard />} />
+      <Route path="/membresias" element={<Membresias />} />
+      <Route path="/usuarios" element={<Usuarios />} />
     </Routes>
   );
 } 

@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Calendar, Clock, Users, Plus, Search, Filter, Download, Upload, X, CheckCircle, AlertTriangle, Edit2, Trash2 } from 'lucide-react';
-import { classesService, trainersService } from '../services/api';
+import { classesService } from '../services/api';
 import { useApp } from '../context/AppContext';
+import { useEntrenadores } from '../context/EntrenadoresContext';
 
 // Días de la semana
 const diasSemana = [
@@ -26,6 +27,7 @@ function Toast({ message, type, onClose }) {
 
 export default function Clases() {
   const { classes, loading: contextLoading, error: contextError, updateClasses } = useApp();
+  const { entrenadores } = useEntrenadores();
   const [showForm, setShowForm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [claseToDelete, setClaseToDelete] = useState(null);
@@ -44,7 +46,6 @@ export default function Clases() {
   const [toast, setToast] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
-  const [trainers, setTrainers] = useState([]);
 
   // Cargar datos iniciales
   useEffect(() => {
@@ -54,12 +55,8 @@ export default function Clases() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [clasesData, entrenadoresData] = await Promise.all([
-        classesService.getAll(),
-        trainersService.getAll()
-      ]);
+      const clasesData = await classesService.getAll();
       updateClasses(clasesData);
-      setTrainers(entrenadoresData);
     } catch (error) {
       showToast('Error al cargar los datos', 'error');
     } finally {
@@ -76,7 +73,7 @@ export default function Clases() {
     setEditingClase(clase);
     setForm(clase ? {
       ...clase,
-      instructor: trainers.find(t => t.nombre === clase.instructor)?.id || '',
+      instructor: entrenadores.find(t => t.nombre === clase.instructor)?.id || '',
       dias: Array.isArray(clase.dias) ? clase.dias : [],
       estado: clase.estado || 'Activa'
     } : {
@@ -134,7 +131,7 @@ export default function Clases() {
 
     try {
       setLoading(true);
-      const selectedTrainer = trainers.find(t => t.id === parseInt(form.instructor));
+      const selectedTrainer = entrenadores.find(t => t.id === parseInt(form.instructor));
       const claseData = {
         ...form,
         instructor: selectedTrainer?.nombre,
@@ -394,7 +391,7 @@ export default function Clases() {
                     className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   >
                     <option value="">Seleccionar instructor</option>
-                    {trainers.map(trainer => (
+                    {entrenadores.map(trainer => (
                       <option key={trainer.id} value={trainer.id}>
                         {trainer.nombre}
                       </option>
