@@ -372,26 +372,24 @@ export default function Clases() {
                       {clase.estado}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <div className="flex justify-end gap-2">
-                      <button
-                        onClick={() => handleOpenForm(clase)}
-                        className="text-blue-600 hover:text-blue-900"
-                        title="Editar"
-                      >
-                        <Edit2 className="h-5 w-5" />
-                      </button>
-                      <button
-                        onClick={() => {
-                          setClaseToDelete(clase);
-                          setShowDeleteConfirm(true);
-                        }}
-                        className="text-red-600 hover:text-red-900"
-                        title="Eliminar"
-                      >
-                        <Trash2 className="h-5 w-5" />
-                      </button>
-                    </div>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                    <button
+                      onClick={() => handleOpenForm(clase)}
+                      className="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    >
+                      <Edit2 className="h-4 w-4 mr-1.5" />
+                      Editar
+                    </button>
+                    <button
+                      onClick={() => {
+                        setClaseToDelete(clase);
+                        setShowDeleteConfirm(true);
+                      }}
+                      className="inline-flex items-center px-3 py-1.5 border border-transparent rounded-md text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                    >
+                      <Trash2 className="h-4 w-4 mr-1.5" />
+                      Eliminar
+                    </button>
                   </td>
                 </tr>
               ))}

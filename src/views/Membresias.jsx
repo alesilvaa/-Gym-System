@@ -206,21 +206,19 @@ export default function Membresias() {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">{m.descripcion}</div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button 
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                    <button
                       onClick={() => handleOpenForm(m)}
-                      className="text-blue-600 hover:text-blue-900 mr-3 flex items-center transition-colors duration-200"
-                      title="Editar plan"
+                      className="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                     >
-                      <Edit2 className="h-4 w-4 mr-1" />
+                      <Edit2 className="h-4 w-4 mr-1.5" />
                       Editar
                     </button>
-                    <button 
+                    <button
                       onClick={() => handleDelete(m)}
-                      className="text-red-600 hover:text-red-900 flex items-center transition-colors duration-200"
-                      title="Eliminar plan"
+                      className="inline-flex items-center px-3 py-1.5 border border-transparent rounded-md text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                     >
-                      <Trash2 className="h-4 w-4 mr-1" />
+                      <Trash2 className="h-4 w-4 mr-1.5" />
                       Eliminar
                     </button>
                   </td>

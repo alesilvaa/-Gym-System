@@ -335,7 +335,7 @@ export default function Dashboard() {
 
       {/* KPIs Principales */}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        <div className="bg-white overflow-hidden shadow-lg rounded-xl hover:shadow-xl transition-all duration-300 border border-gray-100">
+        <div className="bg-white overflow-hidden shadow-xl rounded-xl hover:shadow-2xl transition-all duration-300 border border-gray-100">
           <div className="p-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
@@ -351,7 +351,7 @@ export default function Dashboard() {
           </div>
         </div>
         
-        <div className="bg-white overflow-hidden shadow-lg rounded-xl hover:shadow-xl transition-all duration-300 border border-gray-100">
+        <div className="bg-white overflow-hidden shadow-xl rounded-xl hover:shadow-2xl transition-all duration-300 border border-gray-100">
           <div className="p-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
@@ -367,7 +367,7 @@ export default function Dashboard() {
           </div>
         </div>
         
-        <div className="bg-white overflow-hidden shadow-lg rounded-xl hover:shadow-xl transition-all duration-300 border border-gray-100">
+        <div className="bg-white overflow-hidden shadow-xl rounded-xl hover:shadow-2xl transition-all duration-300 border border-gray-100">
           <div className="p-6">
             <div className="flex items-center">
               <div className="flex-shrink-0 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl p-3">
@@ -383,7 +383,7 @@ export default function Dashboard() {
       </div>
 
       {/* Pagos Pendientes */}
-      <div className="bg-white shadow-lg rounded-xl p-6 hover:shadow-xl transition-all duration-300 border border-gray-100">
+      <div className="bg-white shadow-xl rounded-xl p-6 hover:shadow-2xl transition-all duration-300 border border-gray-100">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-xl font-semibold text-gray-900">Pagos Pendientes</h2>
@@ -457,7 +457,7 @@ export default function Dashboard() {
       
       {/* Gráficos Principales */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <div className="bg-white shadow-lg rounded-xl p-6 hover:shadow-xl transition-all duration-300 border border-gray-100">
+        <div className="bg-white shadow-xl rounded-xl p-6 hover:shadow-2xl transition-all duration-300 border border-gray-100">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-xl font-semibold text-gray-900">Ingresos Mensuales</h2>
@@ -494,7 +494,7 @@ export default function Dashboard() {
           </div>
         </div>
         
-        <div className="bg-white shadow-lg rounded-xl p-6 hover:shadow-xl transition-all duration-300 border border-gray-100">
+        <div className="bg-white shadow-xl rounded-xl p-6 hover:shadow-2xl transition-all duration-300 border border-gray-100">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-xl font-semibold text-gray-900">Asistencia Semanal</h2>
