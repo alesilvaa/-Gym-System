@@ -10,17 +10,28 @@ import {
   ChevronRight,
   Home,
   UserCircle,
-  DollarSign
+  DollarSign,
+  ChevronDown,
+  History
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useSettings } from '../context/SettingsContext';
+import { useState } from 'react';
 
 const tabNames = {
   'dashboard': { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
   'alumnos': { name: 'Alumnos', icon: Users, path: '/alumnos' },
   'entrenadores': { name: 'Entrenadores', icon: Users, path: '/entrenadores' },
   'clases': { name: 'Clases', icon: BookOpen, path: '/clases' },
-  'cobros': { name: 'Cobros', icon: DollarSign, path: '/cobros' },
+  'cobros': { 
+    name: 'Cobros', 
+    icon: DollarSign, 
+    path: '/cobros',
+    submenu: [
+      { name: 'Registrar Cobro', path: '/cobros' },
+      { name: 'Historial de Pagos', path: '/pagos' }
+    ]
+  },
   'asistencia': { name: 'Asistencia', icon: Calendar, path: '/asistencia' },
   'configuracion': { name: 'Configuración', icon: Settings, path: '/configuracion' },
   'mis-clases': { name: 'Mis Clases', icon: BookOpen, path: '/mis-clases' },
@@ -34,6 +45,15 @@ export default function Sidebar({ tabsDisponibles, currentUser, onLogout, collap
   const navigate = useNavigate();
   const location = useLocation();
   const { settings } = useSettings();
+  const [expandedMenu, setExpandedMenu] = useState(null);
+
+  const toggleSubmenu = (tab) => {
+    if (expandedMenu === tab) {
+      setExpandedMenu(null);
+    } else {
+      setExpandedMenu(tab);
+    }
+  };
 
   return (
     <div 
@@ -72,36 +92,63 @@ export default function Sidebar({ tabsDisponibles, currentUser, onLogout, collap
               const tabInfo = tabNames[tab];
               if (!tabInfo) return null;
               const Icon = tabInfo.icon;
-              const isActive = location.pathname === tabInfo.path;
+              const isActive = location.pathname === tabInfo.path || 
+                             (tabInfo.submenu && tabInfo.submenu.some(item => item.path === location.pathname));
+
               return (
-                <button
-                  key={tab}
-                  onClick={() => navigate(tabInfo.path)}
-                  className={`group flex items-center w-full px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 relative overflow-hidden ${
-                    isActive
-                      ? 'bg-[#282c34] text-white font-semibold shadow border-l-4 border-[#42a5f5]'
-                      : 'text-white/70 hover:bg-[#23272f] hover:text-white'
-                  }`}
-                  title={collapsed ? tabInfo.name : undefined}
-                  style={{ minHeight: '44px' }}
-                >
-                  {/* Barra de acento para el activo */}
-                  {isActive && (
-                    <span className="absolute left-0 top-0 h-full w-1 bg-[#42a5f5] rounded-r" />
-                  )}
-                  <span className={`p-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
-                    isActive
-                      ? 'bg-[#42a5f5] text-white shadow'
-                      : 'bg-[#23272f] text-white/70 group-hover:bg-[#31343c] group-hover:text-white'
-                  }`}>
-                    <Icon className="h-5 w-5" strokeWidth={isActive ? 2.5 : 1.5} fill={isActive ? '#42a5f5' : 'none'} />
-                  </span>
-                  {!collapsed && (
-                    <div className="ml-3 flex-1 flex items-center justify-between">
-                      <span className="font-medium truncate">{tabInfo.name}</span>
+                <div key={tab}>
+                  <button
+                    onClick={() => tabInfo.submenu ? toggleSubmenu(tab) : navigate(tabInfo.path)}
+                    className={`group flex items-center w-full px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 relative overflow-hidden ${
+                      isActive
+                        ? 'bg-[#282c34] text-white font-semibold shadow border-l-4 border-[#42a5f5]'
+                        : 'text-white/70 hover:bg-[#23272f] hover:text-white'
+                    }`}
+                    title={collapsed ? tabInfo.name : undefined}
+                    style={{ minHeight: '44px' }}
+                  >
+                    {/* Barra de acento para el activo */}
+                    {isActive && (
+                      <span className="absolute left-0 top-0 h-full w-1 bg-[#42a5f5] rounded-r" />
+                    )}
+                    <span className={`p-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
+                      isActive
+                        ? 'bg-[#42a5f5] text-white shadow'
+                        : 'bg-[#23272f] text-white/70 group-hover:bg-[#31343c] group-hover:text-white'
+                    }`}>
+                      <Icon className="h-5 w-5" strokeWidth={isActive ? 2.5 : 1.5} fill={isActive ? '#42a5f5' : 'none'} />
+                    </span>
+                    {!collapsed && (
+                      <div className="ml-3 flex-1 flex items-center justify-between">
+                        <span className="font-medium truncate">{tabInfo.name}</span>
+                        {tabInfo.submenu && (
+                          <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${
+                            expandedMenu === tab ? 'transform rotate-180' : ''
+                          }`} />
+                        )}
+                      </div>
+                    )}
+                  </button>
+                  
+                  {/* Submenu */}
+                  {!collapsed && tabInfo.submenu && expandedMenu === tab && (
+                    <div className="ml-8 mt-1 space-y-1">
+                      {tabInfo.submenu.map((subItem, index) => (
+                        <button
+                          key={index}
+                          onClick={() => navigate(subItem.path)}
+                          className={`w-full px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 flex items-center ${
+                            location.pathname === subItem.path
+                              ? 'bg-[#282c34] text-white'
+                              : 'text-white/70 hover:bg-[#23272f] hover:text-white'
+                          }`}
+                        >
+                          <span className="font-medium truncate">{subItem.name}</span>
+                        </button>
+                      ))}
                     </div>
                   )}
-                </button>
+                </div>
               );
             })}
           </nav>
