@@ -20,7 +20,6 @@ const tabNames = {
   'alumnos': { name: 'Alumnos', icon: Users, path: '/alumnos' },
   'entrenadores': { name: 'Entrenadores', icon: Users, path: '/entrenadores' },
   'clases': { name: 'Clases', icon: BookOpen, path: '/clases' },
-  'pagos': { name: 'Pagos', icon: CreditCard, path: '/pagos' },
   'cobros': { name: 'Cobros', icon: DollarSign, path: '/cobros' },
   'asistencia': { name: 'Asistencia', icon: Calendar, path: '/asistencia' },
   'configuracion': { name: 'Configuración', icon: Settings, path: '/configuracion' },
@@ -70,18 +69,20 @@ export default function Sidebar({ tabsDisponibles, currentUser, onLogout, collap
         <div className="flex-1 overflow-y-auto py-4 px-2">
           <nav className="space-y-1">
             {tabsDisponibles.map((tab) => {
-              const Icon = tabNames[tab]?.icon;
-              const isActive = location.pathname === tabNames[tab]?.path;
+              const tabInfo = tabNames[tab];
+              if (!tabInfo) return null;
+              const Icon = tabInfo.icon;
+              const isActive = location.pathname === tabInfo.path;
               return (
                 <button
                   key={tab}
-                  onClick={() => navigate(tabNames[tab]?.path)}
+                  onClick={() => navigate(tabInfo.path)}
                   className={`group flex items-center w-full px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 relative overflow-hidden ${
                     isActive
                       ? 'bg-[#282c34] text-white font-semibold shadow border-l-4 border-[#42a5f5]'
                       : 'text-white/70 hover:bg-[#23272f] hover:text-white'
                   }`}
-                  title={collapsed ? tabNames[tab]?.name : undefined}
+                  title={collapsed ? tabInfo.name : undefined}
                   style={{ minHeight: '44px' }}
                 >
                   {/* Barra de acento para el activo */}
@@ -97,7 +98,7 @@ export default function Sidebar({ tabsDisponibles, currentUser, onLogout, collap
                   </span>
                   {!collapsed && (
                     <div className="ml-3 flex-1 flex items-center justify-between">
-                      <span className="font-medium truncate">{tabNames[tab]?.name}</span>
+                      <span className="font-medium truncate">{tabInfo.name}</span>
                     </div>
                   )}
                 </button>

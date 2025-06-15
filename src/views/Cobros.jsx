@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { CreditCard, Plus, Search, Filter, Download, Upload, CheckCircle, AlertTriangle, Clock, Calendar, DollarSign, Info } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { paymentsService, studentsService } from '../services/api';
+import { useNavigate } from 'react-router-dom';
 
 // Estado global para los pagos
 let globalPagos = [];
@@ -24,6 +25,7 @@ function Toast({ message, type, onClose }) {
 }
 
 export default function Cobros() {
+  const navigate = useNavigate();
   const { 
     students, 
     payments, 
@@ -255,13 +257,12 @@ export default function Cobros() {
           </p>
         </div>
         <div className="flex gap-2">
-          <button className="px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center transition-colors duration-200">
-            <Download className="h-4 w-4 mr-2" />
-            Exportar
-          </button>
-          <button className="px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center transition-colors duration-200">
-            <Upload className="h-4 w-4 mr-2" />
-            Importar
+          <button 
+            onClick={() => navigate('/pagos')}
+            className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center gap-2 transition-all duration-200 shadow-sm hover:shadow-md"
+          >
+            <Clock className="h-5 w-5" />
+            <span>Ver Historial de Pagos</span>
           </button>
         </div>
       </div>
