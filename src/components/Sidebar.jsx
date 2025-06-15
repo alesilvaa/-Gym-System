@@ -13,6 +13,7 @@ import {
   DollarSign
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useSettings } from '../context/SettingsContext';
 
 const tabNames = {
   'dashboard': { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
@@ -33,6 +34,7 @@ const tabNames = {
 export default function Sidebar({ tabsDisponibles, currentUser, onLogout, collapsed, setCollapsed }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { settings } = useSettings();
 
   return (
     <div 
@@ -48,7 +50,7 @@ export default function Sidebar({ tabsDisponibles, currentUser, onLogout, collap
               <div className="bg-[#23272f] p-2.5 rounded-xl flex items-center justify-center border border-[#31343c]">
                 <Home className="h-5 w-5 text-[#42a5f5]" fill="#42a5f5" />
               </div>
-              <h1 className="text-xl font-semibold text-white tracking-wide">GymCore</h1>
+              <h1 className="text-xl font-semibold text-white tracking-wide">{settings.nombreGimnasio}</h1>
             </div>
           ) : (
             <div className="bg-[#23272f] p-2.5 rounded-xl mx-auto flex items-center justify-center border border-[#31343c]">

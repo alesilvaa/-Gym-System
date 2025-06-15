@@ -8,7 +8,7 @@ const usuarios = [
   {
     email: 'admin@gym.com',
     password: 'admin123',
-    nombre: 'Joseli',
+    nombre: 'Veronica',
     rol: 'admin'
   },
   {

@@ -42,7 +42,7 @@ const mockData = {
     { id: 2, nombre: 'Carlos Ruiz', especialidad: 'Pilates', email: 'carlos@pilates.com' }
   ],
   settings: {
-    nombreGimnasio: 'GymCore',
+    nombreGimnasio: 'Elite Fitness',
     direccion: 'Calle Ficticia 123',
     telefono: '555-1234',
     metaDiariaClases: 8,
@@ -59,7 +59,7 @@ export const authService = {
   login: async (credentials) => {
     // Usuarios de prueba
     const usuarios = [
-      { email: 'admin@gym.com', password: 'admin123', nombre: 'Joseli', rol: 'admin' },
+      { email: 'admin@gym.com', password: 'admin123', nombre: 'Veronica', rol: 'admin' },
       { email: 'entrenador@gym.com', password: 'entrenador123', nombre: 'Carlos', rol: 'entrenador' },
       { email: 'recepcionista@gym.com', password: 'recepcionista123', nombre: 'Facundo', rol: 'recepcionista' },
       { email: 'alumno@gym.com', password: 'alumno123', nombre: 'María', rol: 'alumno' }
@@ -293,8 +293,13 @@ export const trainersService = {
 };
 
 export const settingsService = {
-  getSettings: async () => mockData.settings,
-  updateSettings: async (settingsData) => { mockData.settings = { ...mockData.settings, ...settingsData }; return mockData.settings; }
+  getSettings: async () => {
+    return mockData.settings;
+  },
+  updateSettings: async (newSettings) => {
+    mockData.settings = { ...mockData.settings, ...newSettings };
+    return mockData.settings;
+  }
 };
 
 export const membershipService = {

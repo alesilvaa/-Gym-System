@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Users, Plus, Edit2, Trash2, X, CheckCircle, AlertTriangle, Search } from 'lucide-react';
 
 const initialUsuarios = [
-  { id: 1, nombre: 'Joseli', email: 'admin@gym.com', rol: 'admin', vistas: ['dashboard', 'alumnos', 'entrenadores', 'clases', 'pagos', 'asistencia', 'configuracion'] },
+  { id: 1, nombre: 'Veronica', email: 'admin@gym.com', rol: 'admin', vistas: ['dashboard', 'alumnos', 'entrenadores', 'clases', 'pagos', 'asistencia', 'configuracion'] },
   { id: 2, nombre: 'María Pérez', email: 'maria.entrenadora@email.com', rol: 'entrenador', vistas: ['mis-clases-entrenador'] },
 ];
 

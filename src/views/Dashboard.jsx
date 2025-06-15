@@ -3,6 +3,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { Users, CreditCard, Calendar, Clock, TrendingUp, TrendingDown, AlertTriangle, DollarSign, Edit2 } from 'lucide-react';
 import { dashboardService, settingsService } from '../services/api';
 import { useApp } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 
 function getMonthName(monthIndex) {
   const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
@@ -41,6 +42,15 @@ export default function Dashboard() {
   const [isEditingMeta, setIsEditingMeta] = useState(false);
   const [editingMetaType, setEditingMetaType] = useState(null);
   const [nuevaMeta, setNuevaMeta] = useState(0);
+  const { currentUser } = useAuth();
+
+  // Saludo dinámico según la hora
+  const getSaludo = () => {
+    const hora = new Date().getHours();
+    if (hora >= 6 && hora < 12) return 'Buenos días!';
+    if (hora >= 12 && hora < 19) return 'Buenas tardes!';
+    return 'Buenas noches!';
+  };
 
   // Cargar configuración inicial
   useEffect(() => {
@@ -288,6 +298,10 @@ export default function Dashboard() {
 
   return (
     <div className="p-6 space-y-8 bg-gray-50 min-h-screen">
+      {/* Header personalizado de saludo */}
+      <div className="mb-4">
+        <h2 className="text-xl font-semibold text-gray-800">{getSaludo()}{currentUser?.nombre ? `, ${currentUser.nombre}` : ''}</h2>
+      </div>
       {/* Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
         <div>

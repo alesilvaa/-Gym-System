@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Settings, Calendar, Bell, Lock, Save } from 'lucide-react';
+import { useSettings } from '../context/SettingsContext';
 
 function Toast({ message, type, onClose }) {
   return (
@@ -13,6 +14,68 @@ function Toast({ message, type, onClose }) {
 export default function Configuracion() {
   const [activeTab, setActiveTab] = useState('general');
   const [toast, setToast] = useState(null);
+  const { settings, loading, updateSettings } = useSettings();
+  const [formData, setFormData] = useState(settings);
+  const [errors, setErrors] = useState({});
+
+  const validateForm = () => {
+    const newErrors = {};
+    
+    if (!formData.nombreGimnasio?.trim()) {
+      newErrors.nombreGimnasio = 'El nombre del gimnasio es obligatorio';
+    }
+    
+    if (!formData.direccion?.trim()) {
+      newErrors.direccion = 'La dirección es obligatoria';
+    }
+    
+    if (!formData.telefono?.trim()) {
+      newErrors.telefono = 'El teléfono es obligatorio';
+    }
+    
+    if (!formData.email?.trim()) {
+      newErrors.email = 'El email es obligatorio';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'El email no es válido';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleInputChange = (e) => {
+    const { id, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [id]: value
+    }));
+    // Limpiar el error cuando el usuario empieza a escribir
+    if (errors[id]) {
+      setErrors(prev => ({
+        ...prev,
+        [id]: undefined
+      }));
+    }
+  };
+
+  const handleSave = async () => {
+    if (!validateForm()) {
+      showToast('Por favor complete todos los campos obligatorios', 'error');
+      return;
+    }
+
+    try {
+      await updateSettings(formData);
+      showToast('Configuración guardada exitosamente', 'success');
+    } catch (error) {
+      showToast('Error al guardar la configuración', 'error');
+    }
+  };
+
+  const showToast = (message, type) => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   const tabs = [
     { id: 'general', name: 'General', icon: Settings },
@@ -21,8 +84,18 @@ export default function Configuracion() {
     { id: 'seguridad', name: 'Seguridad', icon: Lock }
   ];
 
+  if (loading) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
+      {toast && <Toast {...toast} onClose={() => setToast(null)} />}
+      
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Configuración</h1>
@@ -30,7 +103,10 @@ export default function Configuracion() {
             Administra la configuración general del gimnasio
           </p>
         </div>
-        <button className="px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center transition-colors duration-200 shadow-sm">
+        <button 
+          onClick={handleSave}
+          className="px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center transition-colors duration-200 shadow-sm"
+        >
           <Save className="h-5 w-5 mr-2" />
           Guardar Cambios
         </button>
@@ -66,16 +142,23 @@ export default function Configuracion() {
                 <h2 className="text-xl font-bold text-gray-900">Configuración General</h2>
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                   <div>
-                    <label htmlFor="nombre-gimnasio" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="nombreGimnasio" className="block text-sm font-medium text-gray-700 mb-1">
                       Nombre del Gimnasio
                       <span className="text-red-500 ml-1">*</span>
                     </label>
                     <input
                       type="text"
-                      id="nombre-gimnasio"
-                      className="block w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                      id="nombreGimnasio"
+                      value={formData.nombreGimnasio}
+                      onChange={handleInputChange}
+                      className={`block w-full px-4 py-2.5 rounded-lg border ${
+                        errors.nombreGimnasio ? 'border-red-500' : 'border-gray-300'
+                      } focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200`}
                       placeholder="Nombre del gimnasio"
                     />
+                    {errors.nombreGimnasio && (
+                      <p className="mt-1 text-sm text-red-600">{errors.nombreGimnasio}</p>
+                    )}
                   </div>
                   <div>
                     <label htmlFor="direccion" className="block text-sm font-medium text-gray-700 mb-1">
@@ -85,9 +168,16 @@ export default function Configuracion() {
                     <input
                       type="text"
                       id="direccion"
-                      className="block w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                      value={formData.direccion}
+                      onChange={handleInputChange}
+                      className={`block w-full px-4 py-2.5 rounded-lg border ${
+                        errors.direccion ? 'border-red-500' : 'border-gray-300'
+                      } focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200`}
                       placeholder="Dirección del gimnasio"
                     />
+                    {errors.direccion && (
+                      <p className="mt-1 text-sm text-red-600">{errors.direccion}</p>
+                    )}
                   </div>
                   <div>
                     <label htmlFor="telefono" className="block text-sm font-medium text-gray-700 mb-1">
@@ -97,9 +187,16 @@ export default function Configuracion() {
                     <input
                       type="tel"
                       id="telefono"
-                      className="block w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                      value={formData.telefono}
+                      onChange={handleInputChange}
+                      className={`block w-full px-4 py-2.5 rounded-lg border ${
+                        errors.telefono ? 'border-red-500' : 'border-gray-300'
+                      } focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200`}
                       placeholder="Teléfono de contacto"
                     />
+                    {errors.telefono && (
+                      <p className="mt-1 text-sm text-red-600">{errors.telefono}</p>
+                    )}
                   </div>
                   <div>
                     <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
@@ -109,9 +206,16 @@ export default function Configuracion() {
                     <input
                       type="email"
                       id="email"
-                      className="block w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      className={`block w-full px-4 py-2.5 rounded-lg border ${
+                        errors.email ? 'border-red-500' : 'border-gray-300'
+                      } focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200`}
                       placeholder="Email de contacto"
                     />
+                    {errors.email && (
+                      <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -240,11 +344,6 @@ export default function Configuracion() {
           </div>
         </div>
       </div>
-
-      {/* Toast de feedback */}
-      {toast && (
-        <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
-      )}
     </div>
   );
 }
