@@ -8,19 +8,19 @@ import { SettingsProvider } from './context/SettingsContext';
 
 function App() {
   return (
-    <EntrenadoresProvider>
-      <BrowserRouter>
-        <AuthProvider>
-          <SettingsProvider>
-            <AppProvider>
+    <BrowserRouter>
+      <AuthProvider>
+        <SettingsProvider>
+          <AppProvider>
+            <EntrenadoresProvider>
               <Layout>
                 <AppRoutes />
               </Layout>
-            </AppProvider>
-          </SettingsProvider>
-        </AuthProvider>
-      </BrowserRouter>
-    </EntrenadoresProvider>
+            </EntrenadoresProvider>
+          </AppProvider>
+        </SettingsProvider>
+      </AuthProvider>
+    </BrowserRouter>
   );
 }
 

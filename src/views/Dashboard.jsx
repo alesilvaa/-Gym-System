@@ -299,14 +299,21 @@ export default function Dashboard() {
   return (
     <div className="p-6 space-y-8 bg-gray-50 min-h-screen">
       {/* Header personalizado de saludo */}
-      <div className="mb-4">
-        <h2 className="text-xl font-semibold text-gray-800">{getSaludo()}{currentUser?.nombre ? ` ${currentUser.nombre}!` : ''}</h2>
+      <div className="mb-6 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-6 shadow-md">
+        <div className="flex flex-col space-y-1">
+          <h2 className="text-3xl font-bold text-white">
+            {getSaludo()}{currentUser?.nombre ? ` ${currentUser.nombre}!` : ''}
+          </h2>
+          <p className="text-blue-100 text-base">
+            {formatDate(currentDate)}
+          </p>
+        </div>
       </div>
+
       {/* Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Panel de Control</h1>
-          <p className="text-gray-600 mt-1">{formatDate(currentDate)}</p>
         </div>
         {pagosPendientes.length > 0 && (
           <div className="flex space-x-3">
@@ -319,7 +326,7 @@ export default function Dashboard() {
       </div>
 
       {/* KPIs Principales */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         <div className="bg-white overflow-hidden shadow-lg rounded-xl hover:shadow-xl transition-all duration-300 border border-gray-100">
           <div className="p-6">
             <div className="flex items-center justify-between">
@@ -361,25 +368,6 @@ export default function Dashboard() {
               <div className="ml-5">
                 <dt className="text-sm font-medium text-gray-500">Clases Hoy</dt>
                 <dd className="text-3xl font-bold text-gray-900">{stats.clasesHoy}</dd>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-white overflow-hidden shadow-lg rounded-xl hover:shadow-xl transition-all duration-300 border border-gray-100">
-          <div className="p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <div className="flex-shrink-0 bg-gradient-to-br from-red-500 to-red-600 rounded-xl p-3">
-                  <CreditCard className="h-6 w-6 text-white" />
-                </div>
-                <div className="ml-5">
-                  <dt className="text-sm font-medium text-gray-500">Pagos Pendientes</dt>
-                  <dd className="text-3xl font-bold text-gray-900">{stats.pagosPendientes}</dd>
-                </div>
-              </div>
-              <div className="flex items-center text-red-500">
-                <span className="text-sm font-medium">{stats.montoPendiente.toLocaleString()} Gs</span>
               </div>
             </div>
           </div>

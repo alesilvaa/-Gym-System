@@ -17,56 +17,31 @@ export function useEntrenadores() {
 
 export function EntrenadoresProvider({ children }) {
   const [entrenadores, setEntrenadores] = useState(() => {
-    try {
-      const stored = localStorage.getItem('entrenadores');
-      return stored ? JSON.parse(stored) : initialEntrenadores;
-    } catch (error) {
-      console.error('Error al cargar entrenadores del localStorage:', error);
-      return initialEntrenadores;
-    }
+    const stored = localStorage.getItem('entrenadores');
+    return stored ? JSON.parse(stored) : initialEntrenadores;
   });
 
+  // Save to localStorage whenever entrenadores changes
   useEffect(() => {
-    try {
-      localStorage.setItem('entrenadores', JSON.stringify(entrenadores));
-    } catch (error) {
-      console.error('Error al guardar entrenadores en localStorage:', error);
-    }
+    localStorage.setItem('entrenadores', JSON.stringify(entrenadores));
   }, [entrenadores]);
 
   const addEntrenador = (entrenador) => {
-    try {
-      const newEntrenador = {
-        ...entrenador,
-        id: Date.now(),
-        estado: entrenador.estado || 'Activo'
-      };
-      setEntrenadores(prev => [...prev, newEntrenador]);
-      return newEntrenador;
-    } catch (error) {
-      console.error('Error al agregar entrenador:', error);
-      throw error;
-    }
+    const newEntrenador = {
+      ...entrenador,
+      id: Date.now(),
+      estado: entrenador.estado || 'Activo'
+    };
+    setEntrenadores(prev => [...prev, newEntrenador]);
+    return newEntrenador;
   };
 
   const updateEntrenador = (id, data) => {
-    try {
-      const updatedEntrenador = { ...data, id };
-      setEntrenadores(prev => prev.map(e => e.id === id ? updatedEntrenador : e));
-      return updatedEntrenador;
-    } catch (error) {
-      console.error('Error al actualizar entrenador:', error);
-      throw error;
-    }
+    setEntrenadores(prev => prev.map(e => e.id === id ? { ...data, id } : e));
   };
 
   const deleteEntrenador = (id) => {
-    try {
-      setEntrenadores(prev => prev.filter(e => e.id !== id));
-    } catch (error) {
-      console.error('Error al eliminar entrenador:', error);
-      throw error;
-    }
+    setEntrenadores(prev => prev.filter(e => e.id !== id));
   };
 
   return (

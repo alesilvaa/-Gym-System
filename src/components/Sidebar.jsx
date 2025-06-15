@@ -27,7 +27,7 @@ const tabNames = {
   'mis-clases': { name: 'Mis Clases', icon: BookOpen, path: '/mis-clases' },
   'mis-pagos': { name: 'Mis Pagos', icon: CreditCard, path: '/mis-pagos' },
   'mis-clases-entrenador': { name: 'Mis Clases', icon: BookOpen, path: '/mis-clases-entrenador' },
-  'membresias': { name: 'Membresías', icon: CreditCard, path: '/membresias' },
+  'membresias': { name: 'Planes', icon: CreditCard, path: '/membresias' },
   'usuarios': { name: 'Usuarios', icon: Users, path: '/usuarios' }
 };
 

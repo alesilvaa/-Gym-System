@@ -436,20 +436,6 @@ export default function Alumnos() {
                   />
                 </div>
               </div>
-              <div className="flex gap-2">
-                <button className="px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center transition-colors duration-200">
-                  <Filter className="h-4 w-4 mr-2" />
-                  Filtros
-                </button>
-                <button className="px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center transition-colors duration-200">
-                  <Download className="h-4 w-4 mr-2" />
-                  Exportar
-                </button>
-                <button className="px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center transition-colors duration-200">
-                  <Upload className="h-4 w-4 mr-2" />
-                  Importar
-                </button>
-              </div>
             </div>
           </div>
 

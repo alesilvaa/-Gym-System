@@ -132,6 +132,8 @@ export default function Entrenadores() {
         estado: form.estado || 'Activo'
       };
       
+      console.log('Current trainers list:', entrenadores);
+      
       if (editingEntrenador) {
         console.log('Updating entrenador:', editingEntrenador.id, formData);
         await updateEntrenador(editingEntrenador.id, formData);

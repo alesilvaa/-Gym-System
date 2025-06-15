@@ -35,7 +35,7 @@ export default function Membresias() {
       const membresiasData = await membershipService.getAll();
       setMembresias(membresiasData);
     } catch (error) {
-      showToast('Error al cargar las membresías', 'error');
+      showToast('Error al cargar los planes', 'error');
     } finally {
       setLoading(false);
     }
@@ -82,16 +82,16 @@ export default function Membresias() {
       setLoading(true);
       if (editingMembresia) {
         await membershipService.update(editingMembresia.id, form);
-        showToast('Membresía actualizada correctamente', 'success');
+        showToast('Plan actualizado correctamente', 'success');
       } else {
         await membershipService.create(form);
-        showToast('Membresía agregada correctamente', 'success');
+        showToast('Plan agregado correctamente', 'success');
       }
       await loadMembresias();
       setShowForm(false);
       setEditingMembresia(null);
     } catch (error) {
-      showToast(error.message || 'Error al guardar la membresía', 'error');
+      showToast(error.message || 'Error al guardar el plan', 'error');
     } finally {
       setLoading(false);
     }
@@ -107,11 +107,11 @@ export default function Membresias() {
       setLoading(true);
       await membershipService.delete(membresiaToDelete.id);
       await loadMembresias();
-      showToast('Membresía eliminada', 'success');
+      showToast('Plan eliminado', 'success');
       setShowDelete(false);
       setMembresiaToDelete(null);
     } catch (error) {
-      showToast(error.message || 'Error al eliminar la membresía', 'error');
+      showToast(error.message || 'Error al eliminar el plan', 'error');
     } finally {
       setLoading(false);
     }
@@ -126,9 +126,9 @@ export default function Membresias() {
     <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Tipos de Membresías</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Tipos de Planes</h1>
           <p className="mt-1 text-sm text-gray-500">
-            Administra los diferentes tipos de membresías disponibles
+            Administra los diferentes tipos de planes disponibles
           </p>
         </div>
         <button
@@ -136,7 +136,7 @@ export default function Membresias() {
           className="px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center transition-colors duration-200 shadow-sm"
         >
           <Plus className="h-5 w-5 mr-2" />
-          Nueva Membresía
+          Nuevo Plan
         </button>
       </div>
 
@@ -148,7 +148,7 @@ export default function Membresias() {
             </div>
             <input
               type="text"
-              placeholder="Buscar membresías..."
+              placeholder="Buscar planes..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
@@ -173,13 +173,13 @@ export default function Membresias() {
                   <td colSpan={5} className="text-center py-8">
                     <div className="flex items-center justify-center">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                      <span className="ml-3 text-gray-600">Cargando membresías...</span>
+                      <span className="ml-3 text-gray-600">Cargando planes...</span>
                     </div>
                   </td>
                 </tr>
               ) : filteredMembresias.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="text-center py-8 text-gray-400">No hay membresías registradas.</td>
+                  <td colSpan={5} className="text-center py-8 text-gray-400">No hay planes registrados.</td>
                 </tr>
               ) : filteredMembresias.map(m => (
                 <tr key={m.id} className="hover:bg-gray-50 transition-colors duration-200">
@@ -210,7 +210,7 @@ export default function Membresias() {
                     <button 
                       onClick={() => handleOpenForm(m)}
                       className="text-blue-600 hover:text-blue-900 mr-3 flex items-center transition-colors duration-200"
-                      title="Editar membresía"
+                      title="Editar plan"
                     >
                       <Edit2 className="h-4 w-4 mr-1" />
                       Editar
@@ -218,7 +218,7 @@ export default function Membresias() {
                     <button 
                       onClick={() => handleDelete(m)}
                       className="text-red-600 hover:text-red-900 flex items-center transition-colors duration-200"
-                      title="Eliminar membresía"
+                      title="Eliminar plan"
                     >
                       <Trash2 className="h-4 w-4 mr-1" />
                       Eliminar
@@ -250,19 +250,19 @@ export default function Membresias() {
                 {editingMembresia ? (
                   <>
                     <Edit2 className="h-6 w-6 text-blue-600" />
-                    Editar Membresía
+                    Editar Plan
                   </>
                 ) : (
                   <>
                     <Plus className="h-6 w-6 text-blue-600" />
-                    Nueva Membresía
+                    Nuevo Plan
                   </>
                 )}
               </h3>
               <p className="mt-1 text-sm text-gray-500">
                 {editingMembresia 
-                  ? 'Actualiza la información de la membresía seleccionada.'
-                  : 'Complete el formulario para agregar una nueva membresía.'}
+                  ? 'Actualiza la información del plan seleccionado.'
+                  : 'Complete el formulario para agregar un nuevo plan.'}
               </p>
             </div>
 
@@ -284,7 +284,7 @@ export default function Membresias() {
                             ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
                             : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
                         } focus:outline-none focus:ring-2 transition-colors duration-200`}
-                        placeholder="Nombre de la membresía"
+                        placeholder="Nombre del plan"
                         autoFocus
                       />
                       {formError.includes('nombre') && (
@@ -373,7 +373,7 @@ export default function Membresias() {
                       onChange={handleFormChange}
                       className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition-colors duration-200"
                       rows={3}
-                      placeholder="Descripción de la membresía"
+                      placeholder="Descripción del plan"
                     />
                   </div>
                 </div>
@@ -401,7 +401,7 @@ export default function Membresias() {
                   ) : (
                     <>
                       <CheckCircle className="h-4 w-4 mr-2" />
-                      {editingMembresia ? 'Guardar Cambios' : 'Agregar Membresía'}
+                      {editingMembresia ? 'Guardar Cambios' : 'Agregar Plan'}
                     </>
                   )}
                 </button>
@@ -425,7 +425,7 @@ export default function Membresias() {
               <h3 className="text-xl font-bold text-gray-900">Confirmar Eliminación</h3>
             </div>
             <p className="text-gray-600 mb-6">
-              ¿Estás seguro de que deseas eliminar la membresía <span className="font-semibold">{membresiaToDelete?.nombre}</span>? 
+              ¿Estás seguro de que deseas eliminar el plan <span className="font-semibold">{membresiaToDelete?.nombre}</span>? 
               Esta acción no se puede deshacer.
             </p>
             <div className="flex justify-end gap-3">
