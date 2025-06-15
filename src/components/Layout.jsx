@@ -26,6 +26,8 @@ export default function Layout({ children }) {
       navigate('/mis-clases-entrenador', { replace: true });
     } else if (currentUser?.rol === 'alumno' && location.pathname === '/dashboard') {
       navigate('/mis-clases', { replace: true });
+    } else if (currentUser?.rol === 'recepcionista' && location.pathname === '/dashboard') {
+      navigate('/dashboard-recepcionista', { replace: true });
     }
   }, [currentUser, location.pathname, navigate]);
 
