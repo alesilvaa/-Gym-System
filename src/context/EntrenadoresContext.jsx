@@ -27,12 +27,18 @@ export function EntrenadoresProvider({ children }) {
   }, [entrenadores]);
 
   const addEntrenador = (entrenador) => {
+    console.log('Adding new trainer:', entrenador);
     const newEntrenador = {
       ...entrenador,
       id: Date.now(),
       estado: entrenador.estado || 'Activo'
     };
-    setEntrenadores(prev => [...prev, newEntrenador]);
+    console.log('New trainer with ID:', newEntrenador);
+    setEntrenadores(prev => {
+      const updated = [...prev, newEntrenador];
+      console.log('Updated trainers list:', updated);
+      return updated;
+    });
     return newEntrenador;
   };
 

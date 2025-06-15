@@ -5,7 +5,7 @@ const SettingsContext = createContext();
 
 export function SettingsProvider({ children }) {
   const [settings, setSettings] = useState({
-    nombreGimnasio: '',
+    nombreGimnasio: 'Mi Gimnasio',
     direccion: '',
     telefono: '',
     email: ''
@@ -19,9 +19,15 @@ export function SettingsProvider({ children }) {
   const loadSettings = async () => {
     try {
       const data = await settingsService.getSettings();
-      setSettings(data);
+      setSettings(data || {
+        nombreGimnasio: 'Mi Gimnasio',
+        direccion: '',
+        telefono: '',
+        email: ''
+      });
     } catch (error) {
       console.error('Error loading settings:', error);
+      // Keep default values if there's an error
     } finally {
       setLoading(false);
     }
