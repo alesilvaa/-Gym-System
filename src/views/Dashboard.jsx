@@ -47,9 +47,9 @@ export default function Dashboard() {
   // Saludo dinámico según la hora
   const getSaludo = () => {
     const hora = new Date().getHours();
-    if (hora >= 6 && hora < 12) return 'Buenos días!';
-    if (hora >= 12 && hora < 19) return 'Buenas tardes!';
-    return 'Buenas noches!';
+    if (hora >= 6 && hora < 12) return 'Buenos Días';
+    if (hora >= 12 && hora < 19) return 'Buenas Tardes';
+    return 'Buenas Noches';
   };
 
   // Cargar configuración inicial
@@ -300,7 +300,7 @@ export default function Dashboard() {
     <div className="p-6 space-y-8 bg-gray-50 min-h-screen">
       {/* Header personalizado de saludo */}
       <div className="mb-4">
-        <h2 className="text-xl font-semibold text-gray-800">{getSaludo()}{currentUser?.nombre ? `, ${currentUser.nombre}` : ''}</h2>
+        <h2 className="text-xl font-semibold text-gray-800">{getSaludo()}{currentUser?.nombre ? ` ${currentUser.nombre}!` : ''}</h2>
       </div>
       {/* Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">

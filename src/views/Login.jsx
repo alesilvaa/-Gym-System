@@ -102,13 +102,13 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-600 via-blue-500 to-blue-400 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="text-center">
           <h2 className="mt-6 text-4xl font-extrabold text-white tracking-tight">
             Bienvenido a GymCore
           </h2>
-          <p className="mt-2 text-lg text-indigo-100">
+          <p className="mt-2 text-lg text-blue-100">
             Sistema de gestión para gimnasios
           </p>
         </div>
@@ -123,7 +123,7 @@ export default function Login() {
               </label>
               <div className="mt-1 relative rounded-lg shadow-sm">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-indigo-500" />
+                  <Mail className="h-5 w-5 text-blue-500" />
                 </div>
                 <input
                   id="email"
@@ -133,7 +133,7 @@ export default function Login() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 sm:text-base border-2 border-gray-200 rounded-full transition-all duration-200 py-3 font-medium"
+                  className="focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 sm:text-base border-2 border-gray-200 rounded-full transition-all duration-200 py-3 font-medium"
                   placeholder="tu@email.com"
                 />
               </div>
@@ -145,7 +145,7 @@ export default function Login() {
               </label>
               <div className="mt-1 relative rounded-lg shadow-sm">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-indigo-500" />
+                  <Lock className="h-5 w-5 text-blue-500" />
                 </div>
                 <input
                   id="password"
@@ -155,14 +155,14 @@ export default function Login() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 pr-10 sm:text-base border-2 border-gray-200 rounded-full transition-all duration-200 py-3 font-medium"
+                  className="focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 pr-10 sm:text-base border-2 border-gray-200 rounded-full transition-all duration-200 py-3 font-medium"
                   placeholder="••••••••"
                 />
                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="text-indigo-500 hover:text-indigo-700 transition-colors duration-200"
+                    className="text-blue-500 hover:text-blue-700 transition-colors duration-200"
                   >
                     {showPassword ? "Ocultar" : "Mostrar"}
                   </button>
@@ -193,9 +193,9 @@ export default function Login() {
                 disabled={loading}
                 className={`w-full flex justify-center py-3 px-4 border-2 border-transparent rounded-full shadow-sm text-base font-semibold text-white transition-all duration-200 ${
                   loading 
-                    ? 'bg-indigo-400 cursor-not-allowed' 
-                    : 'bg-indigo-600 hover:bg-indigo-700 hover:shadow-lg transform hover:-translate-y-0.5'
-                } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500`}
+                    ? 'bg-blue-400 cursor-not-allowed' 
+                    : 'bg-blue-600 hover:bg-blue-700 hover:shadow-lg transform hover:-translate-y-0.5'
+                } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
               >
                 {loading ? (
                   <>
@@ -222,23 +222,23 @@ export default function Login() {
             </div>
 
             <div className="mt-6 grid grid-cols-1 gap-4">
-              <div className="text-sm text-gray-600 bg-gray-50 p-4 rounded-lg border border-gray-200 hover:border-indigo-200 transition-colors duration-200">
-                <p className="font-semibold text-indigo-600">Admin:</p>
+              <div className="text-sm text-gray-600 bg-gray-50 p-4 rounded-lg border border-gray-200 hover:border-blue-200 transition-colors duration-200">
+                <p className="font-semibold text-blue-600">Admin:</p>
                 <p className="mt-1">Email: admin@gym.com</p>
                 <p>Contraseña: admin123</p>
               </div>
-              <div className="text-sm text-gray-600 bg-gray-50 p-4 rounded-lg border border-gray-200 hover:border-indigo-200 transition-colors duration-200">
-                <p className="font-semibold text-indigo-600">Entrenador:</p>
+              <div className="text-sm text-gray-600 bg-gray-50 p-4 rounded-lg border border-gray-200 hover:border-blue-200 transition-colors duration-200">
+                <p className="font-semibold text-blue-600">Entrenador:</p>
                 <p className="mt-1">Email: entrenador@gym.com</p>
                 <p>Contraseña: entrenador123</p>
               </div>
-              <div className="text-sm text-gray-600 bg-gray-50 p-4 rounded-lg border border-gray-200 hover:border-indigo-200 transition-colors duration-200">
-                <p className="font-semibold text-indigo-600">Recepcionista:</p>
+              <div className="text-sm text-gray-600 bg-gray-50 p-4 rounded-lg border border-gray-200 hover:border-blue-200 transition-colors duration-200">
+                <p className="font-semibold text-blue-600">Recepcionista:</p>
                 <p className="mt-1">Email: recepcionista@gym.com</p>
                 <p>Contraseña: recepcionista123</p>
               </div>
-              <div className="text-sm text-gray-600 bg-gray-50 p-4 rounded-lg border border-gray-200 hover:border-indigo-200 transition-colors duration-200">
-                <p className="font-semibold text-indigo-600">Alumno:</p>
+              <div className="text-sm text-gray-600 bg-gray-50 p-4 rounded-lg border border-gray-200 hover:border-blue-200 transition-colors duration-200">
+                <p className="font-semibold text-blue-600">Alumno:</p>
                 <p className="mt-1">Email: alumno@gym.com</p>
                 <p>Contraseña: alumno123</p>
               </div>
