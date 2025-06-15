@@ -317,10 +317,18 @@ export default function Dashboard() {
         </div>
         {pagosPendientes.length > 0 && (
           <div className="flex space-x-3">
-            <button className="px-4 py-2 bg-red-100 text-red-700 rounded-lg flex items-center">
-              <AlertTriangle className="h-4 w-4 mr-2" />
-              {pagosPendientes.length} Pagos Pendientes
-            </button>
+            <div className="bg-gradient-to-r from-red-500 to-red-600 text-white px-6 py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 flex items-center space-x-3 group">
+              <div className="bg-white/20 p-2 rounded-full">
+                <AlertTriangle className="h-5 w-5" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-sm font-medium opacity-90">Pagos Pendientes</span>
+                <span className="text-xl font-bold">{pagosPendientes.length}</span>
+              </div>
+              <div className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <span className="text-sm">→</span>
+              </div>
+            </div>
           </div>
         )}
       </div>
