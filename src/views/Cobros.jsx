@@ -392,49 +392,51 @@ export default function Cobros() {
 
       {/* Modal de Cobro */}
       {showForm && (
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
-            <div className="px-4 py-3 border-b border-gray-200">
+        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-auto my-8 transform transition-all">
+            <div className="sticky top-0 bg-white px-6 py-4 border-b border-gray-200 rounded-t-xl">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-medium text-gray-900">
+                  <h3 className="text-xl font-semibold text-gray-900">
                     Registrar Cobro
                   </h3>
-                  <p className="text-sm text-gray-500">
+                  <p className="mt-1 text-sm text-gray-500">
                     {selectedAlumno?.nombre}
                   </p>
                 </div>
                 <button
                   onClick={handleCloseForm}
-                  className="text-gray-400 hover:text-gray-500"
+                  className="text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-full p-1"
                 >
                   <span className="sr-only">Cerrar</span>
-                  ×
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
                 </button>
               </div>
             </div>
 
-            <form onSubmit={handleFormSubmit} className="px-4 py-3 space-y-3">
+            <form onSubmit={handleFormSubmit} className="px-6 py-4 space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto">
               {formError && (
-                <div className="bg-red-50 text-red-800 p-2 rounded-md text-sm flex items-start">
-                  <AlertTriangle className="h-4 w-4 mr-2 flex-shrink-0 mt-0.5" />
+                <div className="bg-red-50 text-red-800 p-3 rounded-lg text-sm flex items-start border border-red-200">
+                  <AlertTriangle className="h-5 w-5 mr-2 flex-shrink-0 mt-0.5" />
                   <span>{formError}</span>
                 </div>
               )}
 
               {getRecomendacion() && (
-                <div className="bg-yellow-50 border-l-4 border-yellow-400 p-3 rounded mb-2 text-yellow-800 text-sm flex items-start">
-                  <Info className="h-4 w-4 mr-2 flex-shrink-0 mt-0.5" />
+                <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg text-yellow-800 text-sm flex items-start">
+                  <Info className="h-5 w-5 mr-2 flex-shrink-0 mt-0.5" />
                   <span>{getRecomendacion()}</span>
                 </div>
               )}
 
-              <div className="bg-blue-50 p-3 rounded-lg">
+              <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
                 <div className="flex items-start">
-                  <Info className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                  <div className="ml-2">
+                  <Info className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <div className="ml-3">
                     <h4 className="text-sm font-medium text-blue-800">Información del Plan</h4>
-                    <dl className="mt-1 space-y-1">
+                    <dl className="mt-2 space-y-2">
                       <div className="flex justify-between">
                         <dt className="text-sm text-blue-700">Plan:</dt>
                         <dd className="text-sm font-medium text-blue-900">{selectedAlumno?.plan || 'Sin plan'}</dd>
@@ -452,16 +454,16 @@ export default function Cobros() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
                     Tipo de Pago
                   </label>
                   <select
                     name="tipoPago"
                     value={form.tipoPago}
                     onChange={handleFormChange}
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-1.5 px-2 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    className="block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
                     <option value="normal">Pago Normal</option>
                     <option value="adelantado">Pago Adelantado</option>
@@ -470,14 +472,14 @@ export default function Cobros() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
                     Método de Pago
                   </label>
                   <select
                     name="metodo"
                     value={form.metodo}
                     onChange={handleFormChange}
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-1.5 px-2 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    className="block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
                     <option value="">Seleccione un método</option>
                     <option value="Efectivo">Efectivo</option>
@@ -488,10 +490,10 @@ export default function Cobros() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Monto
                 </label>
-                <div className="mt-1 relative rounded-md shadow-sm">
+                <div className="relative rounded-lg shadow-sm">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <span className="text-gray-500 sm:text-sm">Gs</span>
                   </div>
@@ -500,32 +502,32 @@ export default function Cobros() {
                     name="monto"
                     value={form.monto}
                     onChange={handleFormChange}
-                    className="block w-full pl-12 pr-3 border border-gray-300 rounded-md shadow-sm py-1.5 px-2 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    className="block w-full pl-12 pr-3 border border-gray-300 rounded-lg shadow-sm py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="0"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Fecha
                 </label>
-                <div className="mt-1 relative rounded-md shadow-sm">
+                <div className="relative rounded-lg shadow-sm">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Calendar className="h-4 w-4 text-gray-400" />
+                    <Calendar className="h-5 w-5 text-gray-400" />
                   </div>
                   <input
                     type="date"
                     name="fecha"
                     value={form.fecha}
                     onChange={handleFormChange}
-                    className="block w-full pl-10 border border-gray-300 rounded-md shadow-sm py-1.5 px-2 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    className="block w-full pl-10 border border-gray-300 rounded-lg shadow-sm py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Concepto
                 </label>
                 <input
@@ -533,56 +535,59 @@ export default function Cobros() {
                   name="concepto"
                   value={form.concepto}
                   onChange={handleFormChange}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-1.5 px-2 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Ej: Mensualidad Abril"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Observaciones
                 </label>
                 <textarea
                   name="observaciones"
                   value={form.observaciones}
                   onChange={handleFormChange}
-                  rows="2"
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-1.5 px-2 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  rows="3"
+                  className="block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Observaciones adicionales..."
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Estado del Pago
                 </label>
                 <select
                   name="estado"
                   value={form.estado}
                   onChange={handleFormChange}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-1.5 px-2 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="Pendiente">Pendiente</option>
                   <option value="Completado">Completado</option>
                 </select>
               </div>
+            </form>
 
-              <div className="flex justify-end gap-2 pt-3 border-t border-gray-200">
+            <div className="sticky bottom-0 bg-white px-6 py-4 border-t border-gray-200 rounded-b-xl">
+              <div className="flex justify-end gap-3">
                 <button
                   type="button"
                   onClick={handleCloseForm}
-                  className="px-3 py-1.5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-3 py-1.5 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  onClick={handleFormSubmit}
+                  className="px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
                 >
                   Confirmar Cobro
                 </button>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       )}

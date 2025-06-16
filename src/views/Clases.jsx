@@ -401,202 +401,268 @@ export default function Clases() {
       {/* Modal Formulario */}
       {showForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">
-                  {editingClase ? 'Editar Clase' : 'Nueva Clase'}
-                </h2>
-                <button onClick={handleCloseForm} className="text-gray-400 hover:text-gray-500">
+          <div className="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-8">
+              <div className="flex justify-between items-center mb-8 border-b pb-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    {editingClase ? 'Editar Clase' : 'Nueva Clase'}
+                  </h2>
+                  <p className="mt-2 text-sm text-gray-500">
+                    {editingClase ? 'Modifica los detalles de la clase existente' : 'Completa los detalles para crear una nueva clase'}
+                  </p>
+                </div>
+                <button 
+                  onClick={handleCloseForm} 
+                  className="text-gray-400 hover:text-gray-500 transition-colors duration-200"
+                >
                   <X className="h-6 w-6" />
                 </button>
               </div>
 
-              <form onSubmit={handleFormSubmit} className="space-y-6">
-                {/* Nombre */}
-                <div>
-                  <label htmlFor="nombre" className="block text-sm font-medium text-gray-700">
-                    Nombre
-                  </label>
-                  <input
-                    type="text"
-                    id="nombre"
-                    name="nombre"
-                    value={form.nombre}
-                    onChange={handleFormChange}
-                    className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  />
+              <form onSubmit={handleFormSubmit} className="space-y-8">
+                {/* Información Básica */}
+                <div className="bg-white border border-gray-200 rounded-xl p-6 space-y-6">
+                  <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                    <Calendar className="h-5 w-5 mr-2 text-blue-600" />
+                    Información Básica
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label htmlFor="nombre" className="block text-sm font-medium text-gray-700 mb-1">
+                        Nombre de la Clase
+                        <span className="text-red-500 ml-1">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        id="nombre"
+                        name="nombre"
+                        value={form.nombre}
+                        onChange={handleFormChange}
+                        placeholder="Ej: Yoga Flow, Spinning, etc."
+                        className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors duration-200"
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="instructor" className="block text-sm font-medium text-gray-700 mb-1">
+                        Instructor
+                      </label>
+                      <select
+                        id="instructor"
+                        name="instructor"
+                        value={form.instructor}
+                        onChange={handleFormChange}
+                        className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors duration-200"
+                      >
+                        <option value="">Sin asignar</option>
+                        {entrenadores.map(trainer => (
+                          <option key={trainer.id} value={trainer.id}>
+                            {trainer.nombre}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label htmlFor="nivel" className="block text-sm font-medium text-gray-700 mb-1">
+                        Nivel
+                      </label>
+                      <select
+                        id="nivel"
+                        name="nivel"
+                        value={form.nivel}
+                        onChange={handleFormChange}
+                        className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors duration-200"
+                      >
+                        <option value="Principiante">Principiante</option>
+                        <option value="Intermedio">Intermedio</option>
+                        <option value="Avanzado">Avanzado</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label htmlFor="capacidad" className="block text-sm font-medium text-gray-700 mb-1">
+                        Capacidad
+                        <span className="text-red-500 ml-1">*</span>
+                      </label>
+                      <input
+                        type="number"
+                        id="capacidad"
+                        name="capacidad"
+                        value={form.capacidad}
+                        onChange={handleFormChange}
+                        min="1"
+                        placeholder="Número máximo de participantes"
+                        className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors duration-200"
+                      />
+                    </div>
+                  </div>
                 </div>
 
-                {/* Instructor */}
-                <div>
-                  <label htmlFor="instructor" className="block text-sm font-medium text-gray-700">
-                    Instructor
-                  </label>
-                  <select
-                    id="instructor"
-                    name="instructor"
-                    value={form.instructor}
-                    onChange={handleFormChange}
-                    className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  >
-                    <option value="">Sin asignar</option>
-                    {entrenadores.map(trainer => (
-                      <option key={trainer.id} value={trainer.id}>
-                        {trainer.nombre}
-                      </option>
-                    ))}
-                  </select>
+                {/* Horario y Días */}
+                <div className="bg-white border border-gray-200 rounded-xl p-6 space-y-6">
+                  <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                    <Clock className="h-5 w-5 mr-2 text-blue-600" />
+                    Horario y Días
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label htmlFor="horaInicio" className="block text-sm font-medium text-gray-700 mb-1">
+                        Hora de inicio
+                        <span className="text-red-500 ml-1">*</span>
+                      </label>
+                      <input
+                        type="time"
+                        id="horaInicio"
+                        name="horaInicio"
+                        value={form.horaInicio}
+                        onChange={handleFormChange}
+                        className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors duration-200"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="horaFin" className="block text-sm font-medium text-gray-700 mb-1">
+                        Hora de fin
+                        <span className="text-red-500 ml-1">*</span>
+                      </label>
+                      <input
+                        type="time"
+                        id="horaFin"
+                        name="horaFin"
+                        value={form.horaFin}
+                        onChange={handleFormChange}
+                        className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors duration-200"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Días de clase
+                      <span className="text-red-500 ml-1">*</span>
+                    </label>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                      {diasSemana.map(dia => (
+                        <label 
+                          key={dia.id} 
+                          className={`inline-flex items-center p-3 rounded-lg border cursor-pointer transition-all duration-200 ${
+                            form.dias.includes(dia.id)
+                              ? 'border-blue-500 bg-blue-50 shadow-sm'
+                              : 'border-gray-200 hover:border-blue-200 hover:bg-gray-50'
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={form.dias.includes(dia.id)}
+                            onChange={() => handleDiasChange(dia.id)}
+                            className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                          />
+                          <span className="ml-2 text-sm font-medium text-gray-700">{dia.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
                 </div>
 
                 {/* Estado */}
-                <div>
-                  <label htmlFor="estado" className="block text-sm font-medium text-gray-700">
+                <div className="bg-white border border-gray-200 rounded-xl p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 flex items-center mb-6">
+                    <AlertTriangle className="h-5 w-5 mr-2 text-blue-600" />
                     Estado
-                  </label>
-                  <select
-                    id="estado"
-                    name="estado"
-                    value={form.estado}
-                    onChange={handleFormChange}
-                    className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  >
-                    <option value="Activa">Activa</option>
-                    <option value="Inactiva">Inactiva</option>
-                  </select>
-                </div>
-
-                {/* Horario */}
-                <div className="grid grid-cols-2 gap-4">
+                  </h3>
                   <div>
-                    <label htmlFor="horaInicio" className="block text-sm font-medium text-gray-700">
-                      Hora de inicio
-                    </label>
-                    <input
-                      type="time"
-                      id="horaInicio"
-                      name="horaInicio"
-                      value={form.horaInicio}
-                      onChange={handleFormChange}
-                      className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="horaFin" className="block text-sm font-medium text-gray-700">
-                      Hora de fin
-                    </label>
-                    <input
-                      type="time"
-                      id="horaFin"
-                      name="horaFin"
-                      value={form.horaFin}
-                      onChange={handleFormChange}
-                      className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                    />
-                  </div>
-                </div>
-
-                {/* Capacidad y Nivel */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="capacidad" className="block text-sm font-medium text-gray-700">
-                      Capacidad
-                    </label>
-                    <input
-                      type="number"
-                      id="capacidad"
-                      name="capacidad"
-                      value={form.capacidad}
-                      onChange={handleFormChange}
-                      min="1"
-                      className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="nivel" className="block text-sm font-medium text-gray-700">
-                      Nivel
+                    <label htmlFor="estado" className="block text-sm font-medium text-gray-700 mb-1">
+                      Estado de la Clase
                     </label>
                     <select
-                      id="nivel"
-                      name="nivel"
-                      value={form.nivel}
+                      id="estado"
+                      name="estado"
+                      value={form.estado}
                       onChange={handleFormChange}
-                      className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors duration-200"
                     >
-                      <option value="Principiante">Principiante</option>
-                      <option value="Intermedio">Intermedio</option>
-                      <option value="Avanzado">Avanzado</option>
+                      <option value="Activa">Activa</option>
+                      <option value="Inactiva">Inactiva</option>
                     </select>
                   </div>
                 </div>
 
-                {/* Días */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Días de clase
-                  </label>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                    {diasSemana.map(dia => (
-                      <label key={dia.id} className="inline-flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={form.dias.includes(dia.id)}
-                          onChange={() => handleDiasChange(dia.id)}
-                          className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                        />
-                        <span className="ml-2 text-sm text-gray-700">{dia.label}</span>
-                      </label>
-                    ))}
+                {/* Planes */}
+                <div className="bg-white border border-gray-200 rounded-xl p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 flex items-center mb-6">
+                    <CreditCard className="h-5 w-5 mr-2 text-blue-600" />
+                    Planes Permitidos
+                  </h3>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Selecciona los planes que pueden acceder a esta clase
+                      <span className="text-red-500 ml-1">*</span>
+                    </label>
+                    <div className="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto pr-2">
+                      {membresias.map(membresia => (
+                        <label 
+                          key={membresia.id} 
+                          className={`inline-flex items-center p-3 rounded-lg border cursor-pointer transition-all duration-200 ${
+                            form.membresiasPermitidas.includes(membresia.id)
+                              ? 'border-blue-500 bg-blue-50 shadow-sm'
+                              : 'border-gray-200 hover:border-blue-200 hover:bg-gray-50'
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={form.membresiasPermitidas.includes(membresia.id)}
+                            onChange={() => handleMembresiasChange(membresia.id)}
+                            className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                          />
+                          <div className="ml-3">
+                            <span className="text-sm font-medium text-gray-900">
+                              {membresia.nombre}
+                            </span>
+                            <span className="text-xs text-gray-500 block mt-0.5">
+                              {membresia.descripcion}
+                            </span>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
                   </div>
-                </div>
-
-                {/* Membresías Permitidas */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Membresías Permitidas
-                    <span className="text-red-500 ml-1">*</span>
-                  </label>
-                  <div className="grid grid-cols-2 gap-3">
-                    {membresias.map(membresia => (
-                      <label key={membresia.id} className="inline-flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={form.membresiasPermitidas.includes(membresia.id)}
-                          onChange={() => handleMembresiasChange(membresia.id)}
-                          className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                        />
-                        <span className="ml-2 text-sm text-gray-700">
-                          {membresia.nombre}
-                          <span className="text-gray-500 text-xs block">
-                            {membresia.descripcion}
-                          </span>
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                  {formError.includes('membresias') && (
-                    <p className="mt-1 text-sm text-red-600">Debe seleccionar al menos una membresía</p>
-                  )}
                 </div>
 
                 {formError && (
-                  <div className="text-red-600 text-sm">{formError}</div>
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start">
+                    <AlertTriangle className="h-5 w-5 text-red-400 mt-0.5 mr-2" />
+                    <span className="text-sm text-red-600">{formError}</span>
+                  </div>
                 )}
 
-                <div className="flex justify-end gap-3">
+                <div className="flex justify-end gap-3 pt-6 border-t">
                   <button
                     type="button"
                     onClick={handleCloseForm}
-                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                    className="px-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors duration-200 font-medium"
                   >
                     Cancelar
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    className="px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center font-medium"
                     disabled={loading}
                   >
-                    {loading ? 'Guardando...' : editingClase ? 'Guardar cambios' : 'Crear clase'}
+                    {loading ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Guardando...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        {editingClase ? 'Guardar cambios' : 'Crear clase'}
+                      </>
+                    )}
                   </button>
                 </div>
               </form>
